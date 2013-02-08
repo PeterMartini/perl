@@ -2782,6 +2782,7 @@ try_autoload:
 	dMARK;
 	I32 items = SP - MARK;
 	PADLIST * const padlist = CvPADLIST(cv);
+	Perl_signature_init * initsig = CvSIGNATURE_FUNC(cv);
 	PUSHBLOCK(cx, CXt_SUB, MARK);
 	PUSHSUB(cx);
 	cx->blk_sub.retop = PL_op->op_next;
@@ -2807,21 +2808,23 @@ try_autoload:
 	    cx->blk_sub.argarray = av;
 	    ++MARK;
 
-	    if (items > AvMAX(av) + 1) {
-		SV **ary = AvALLOC(av);
-		if (AvARRAY(av) != ary) {
-		    AvMAX(av) += AvARRAY(av) - AvALLOC(av);
-		    AvARRAY(av) = ary;
-		}
+	    if (initsig == NULL || initsig(aTHX_ cv, MARK, items)) {
 		if (items > AvMAX(av) + 1) {
-		    AvMAX(av) = items - 1;
-		    Renew(ary,items,SV*);
-		    AvALLOC(av) = ary;
-		    AvARRAY(av) = ary;
+		    SV **ary = AvALLOC(av);
+		    if (AvARRAY(av) != ary) {
+			AvMAX(av) += AvARRAY(av) - AvALLOC(av);
+			AvARRAY(av) = ary;
+		    }
+		    if (items > AvMAX(av) + 1) {
+			AvMAX(av) = items - 1;
+			Renew(ary,items,SV*);
+			AvALLOC(av) = ary;
+			AvARRAY(av) = ary;
+		    }
 		}
+		Copy(MARK,AvARRAY(av),items,SV*);
+		AvFILLp(av) = items - 1;
 	    }
-	    Copy(MARK,AvARRAY(av),items,SV*);
-	    AvFILLp(av) = items - 1;
 	
 	    while (items--) {
 		if (*MARK)
@@ -2829,6 +2832,8 @@ try_autoload:
 		MARK++;
 	    }
 	}
+	else if (initsig != NULL)
+	    initsig(aTHX_ cv, AvARRAY(GvAV(PL_defgv)), AvFILLp(GvAV(PL_defgv)) + 1);
 	if ((cx->blk_u16 & OPpENTERSUB_LVAL_MASK) == OPpLVAL_INTRO &&
 	    !CvLVALUE(cv))
 	    DIE(aTHX_ "Can't modify non-lvalue subroutine call");
