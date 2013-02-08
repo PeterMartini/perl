@@ -2904,6 +2904,7 @@ PP(pp_goto)
 	    }
 	    else {
 		PADLIST * const padlist = CvPADLIST(cv);
+		Perl_signature_init * siginit = CvSIGNATURE_FUNC(cv);
 		cx->blk_sub.cv = cv;
 		cx->blk_sub.olddepth = CvDEPTH(cv);
 
@@ -2940,6 +2941,8 @@ PP(pp_goto)
 		    }
 		}
 		else SvREFCNT_dec(arg);
+		if (siginit != NULL)
+		    siginit(aTHX_ cv, AvARRAY(arg), AvFILLp(arg) + 1);
 		if (PERLDB_SUB) {	/* Checking curstash breaks DProf. */
 		    Perl_get_db_sub(aTHX_ NULL, cv);
 		    if (PERLDB_GOTO) {
