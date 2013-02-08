@@ -694,7 +694,16 @@ subname	:	WORD
 /* Subroutine prototype */
 proto	:	/* NULL */
 			{ $$ = (OP*)NULL; }
-	|	THING
+	|	THING {
+			SV * const parseaddr = cop_hints_fetch_pvs(PL_curcop, "Perl_sig_parser", 0);
+			if (parseaddr == &PL_sv_placeholder) {
+				$$ = $1;
+			} else {
+				Perl_signature_parser * parser = INT2PTR(Perl_signature_parser *, SvUVX(parseaddr));
+				parser(aTHX_ PL_compcv, ((SVOP*)$1)->op_sv);
+				$$ = (OP*)NULL;
+			}
+		}
 	;
 
 /* Optional list of subroutine attributes */
