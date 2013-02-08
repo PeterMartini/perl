@@ -8566,7 +8566,8 @@ Perl_yylex(pTHX)
 		    bool must_be_last = FALSE;
 		    bool underscore = FALSE;
 		    bool seen_underscore = FALSE;
-		    const bool warnillegalproto = ckWARN(WARN_ILLEGALPROTO);
+		    const bool warnillegalproto = ckWARN(WARN_ILLEGALPROTO)
+			&& (cop_hints_fetch_pvs(PL_curcop, "Perl_sig_parser", 0) == &PL_sv_placeholder);
                     STRLEN tmplen;
 
 		    s = scan_str(s,!!PL_madskills,FALSE,FALSE, FALSE);
