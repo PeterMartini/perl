@@ -159,3 +159,49 @@ S_isALNUM_lazy(pTHX_ const char* p)
 
     return isALNUM_lazy_if(p,1);
 }
+
+PERL_STATIC_INLINE Perl_signature_init *
+S_CvSIGNATURE_FUNC(const CV * const cv)
+{
+    const AV * const sig = ((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_signature;
+    return sig
+	? INT2PTR(Perl_signature_init *,SvUVX((sig->sv_u.svu_array)[0]))
+	: NULL;
+}
+
+PERL_STATIC_INLINE void
+S_CvSIGNATURE_FUNC_set(pTHX_ const CV * cv, Perl_signature_init * funcp)
+{
+    AV ** avpp = &(((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_signature);
+    if (funcp == NULL) {
+	SvREFCNT_dec(*avpp);
+	*avpp = NULL;
+    } else {
+	if (*avpp == NULL) {
+	    *avpp = newAV();
+	    av_extend(*avpp,1);
+	}
+	av_store(*avpp,0,newSVuv(PTR2UV(funcp)));
+    }
+}
+
+PERL_STATIC_INLINE SV *
+CvSIGNATURE_DATA(const CV * const cv)
+{
+    const AV * const sig = ((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_signature;
+    return sig
+	? (sig->sv_u.svu_array)[1]
+	: NULL;
+}
+
+PERL_STATIC_INLINE void
+S_CvSIGNATURE_DATA_set(pTHX_ const CV * cv, SV * data)
+{
+    AV ** avpp = &(((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_signature);
+    /* Data is optional, so setting it to NULL is fine */
+    if (*avpp == NULL) {
+	*avpp = newAV();
+	av_extend(*avpp,1);
+    }
+    av_store(*avpp,1,data);
+}

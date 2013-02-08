@@ -549,6 +549,7 @@ typedef U16 cv_flags_t;
 	HEK *	xcv_hek;						\
     }		xcv_gv_u;						\
     char *	xcv_file;							\
+    AV *	xcv_signature;							\
     PADLIST *	xcv_padlist;							\
     CV *	xcv_outside;							\
     U32		xcv_outside_seq; /* the COP sequence (at the point of our	\

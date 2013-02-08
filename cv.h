@@ -43,6 +43,9 @@ See L<perlguts/Autoloading with XSUBs>.
 #  define Nullcv Null(CV*)
 #endif
 
+typedef void Perl_signature_parser(pTHX_ CV *, SV *);
+typedef bool Perl_signature_init(pTHX_ CV *, SV **, IV);
+
 #define CvSTASH(sv)	(0+((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_stash)
 #define CvSTASH_set(cv,st) Perl_cvstash_set(aTHX_ cv, st)
 #define CvSTART(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_start
@@ -61,6 +64,10 @@ See L<perlguts/Autoloading with XSUBs>.
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
 #define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
+#define CvSIGNATURE_FUNC(sv)            S_CvSIGNATURE_FUNC(sv)
+#define CvSIGNATURE_FUNC_set(sv,func)	S_CvSIGNATURE_FUNC_set(aTHX_ sv, func)
+#define CvSIGNATURE_DATA(sv)            S_CvSIGNATURE_DATA(sv)
+#define CvSIGNATURE_DATA_set(sv,data)	S_CvSIGNATURE_DATA_set(aTHX_ sv, data)
 #define CvPADLIST(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist
 #define CvOUTSIDE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
 #define CvFLAGS(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
