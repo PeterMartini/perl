@@ -64,10 +64,11 @@ typedef bool Perl_signature_init(pTHX_ CV *, SV **, IV);
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
 #define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
-#define CvSIGNATURE_FUNC(sv)            S_CvSIGNATURE_FUNC(sv)
-#define CvSIGNATURE_FUNC_set(sv,func)	S_CvSIGNATURE_FUNC_set(aTHX_ sv, func)
-#define CvSIGNATURE_DATA(sv)            S_CvSIGNATURE_DATA(sv)
-#define CvSIGNATURE_DATA_set(sv,data)	S_CvSIGNATURE_DATA_set(aTHX_ sv, data)
+#define CvSIGNATURE_AV(cv)	((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_signature
+#define CvSIGNATURE_FUNC(cv)            S_CvSIGNATURE_FUNC(cv)
+#define CvSIGNATURE_FUNC_set(cv,func)	S_CvSIGNATURE_FUNC_set(aTHX_ cv, func)
+#define CvSIGNATURE_DATA(cv)            S_CvSIGNATURE_DATA(cv)
+#define CvSIGNATURE_DATA_set(cv,data)	S_CvSIGNATURE_DATA_set(aTHX_ cv, data)
 #define CvPADLIST(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist
 #define CvOUTSIDE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
 #define CvFLAGS(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
