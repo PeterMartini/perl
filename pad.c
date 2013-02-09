@@ -385,6 +385,14 @@ Perl_cv_undef(pTHX_ CV *cv)
     if (CvNAMED(cv)) CvNAME_HEK_set(cv, NULL);
     else	     CvGV_set(cv, NULL);
 
+    if (CvSIGNATURE_AV(cv)) {
+	DEBUG_X(PerlIO_printf(Perl_debug_log,
+			      "signature undef: cv = 0x%"UVxf" signature av=0x%"UVxf"\n",
+			      PTR2UV(cv), PTR2UV(CvSIGNATURE_AV(cv)))
+		);
+	SvREFCNT_dec(CvSIGNATURE_AV(cv));
+    }
+
     /* This statement and the subsequence if block was pad_undef().  */
     pad_peg("pad_undef");
 
@@ -2130,10 +2138,14 @@ S_cv_clone(pTHX_ CV *proto, CV *cv, CV *outside)
 {
     dVAR;
     const bool newcv = !cv;
+    AV * sigav = CvSIGNATURE_AV(proto);
 
     assert(!CvUNIQUE(proto));
 
     if (!cv) cv = MUTABLE_CV(newSV_type(SvTYPE(proto)));
+    CvSIGNATURE_AV(cv) = sigav;
+    if (sigav)
+        SvREFCNT_inc(sigav);
     CvFLAGS(cv) = CvFLAGS(proto) & ~(CVf_CLONE|CVf_WEAKOUTSIDE|CVf_CVGV_RC
 				    |CVf_SLABBED);
     CvCLONED_on(cv);
