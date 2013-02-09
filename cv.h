@@ -43,7 +43,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #  define Nullcv Null(CV*)
 #endif
 
-typedef void Perl_signature_parser(pTHX_ CV *, SV *);
+typedef bool Perl_signature_parser(pTHX_ CV *, SV *);
 typedef bool Perl_signature_init(pTHX_ CV *, SV **, IV);
 
 #define CvSTASH(sv)	(0+((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_stash)
