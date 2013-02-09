@@ -727,8 +727,12 @@ case 2:
 				(yyval.opval) = (ps[(1) - (1)].val.opval);
 			} else {
 				Perl_signature_parser * parser = INT2PTR(Perl_signature_parser *, SvUVX(parseaddr));
-				parser(aTHX_ PL_compcv, ((SVOP*)(ps[(1) - (1)].val.opval))->op_sv);
-				(yyval.opval) = (OP*)NULL;
+				if (parser(aTHX_ PL_compcv, ((SVOP*)(ps[(1) - (1)].val.opval))->op_sv)) {
+					SAVEFREEOP((ps[(1) - (1)].val.opval));
+					(yyval.opval) = (OP*)NULL;
+				} else {
+					(yyval.opval) = (ps[(1) - (1)].val.opval);
+				}
 			;}
 		}
     break;

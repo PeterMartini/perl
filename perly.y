@@ -700,8 +700,12 @@ proto	:	/* NULL */
 				$$ = $1;
 			} else {
 				Perl_signature_parser * parser = INT2PTR(Perl_signature_parser *, SvUVX(parseaddr));
-				parser(aTHX_ PL_compcv, ((SVOP*)$1)->op_sv);
-				$$ = (OP*)NULL;
+				if (parser(aTHX_ PL_compcv, ((SVOP*)$1)->op_sv)) {
+					SAVEFREEOP($1);
+					$$ = (OP*)NULL;
+				} else {
+					$$ = $1;
+				}
 			}
 		}
 	;
