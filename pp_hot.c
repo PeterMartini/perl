@@ -2832,7 +2832,7 @@ try_autoload:
 		MARK++;
 	    }
 	}
-	else if (initsig != NULL)
+	else if (initsig != 0)
 	    initsig(aTHX_ cv, AvARRAY(GvAV(PL_defgv)), AvFILLp(GvAV(PL_defgv)) + 1);
 	if ((cx->blk_u16 & OPpENTERSUB_LVAL_MASK) == OPpLVAL_INTRO &&
 	    !CvLVALUE(cv))
