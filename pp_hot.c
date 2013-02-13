@@ -2808,7 +2808,7 @@ try_autoload:
 	    cx->blk_sub.argarray = av;
 	    ++MARK;
 
-	    if (initsig == NULL || initsig(aTHX_ cv, MARK, items)) {
+	    if (initsig == 0 || initsig(aTHX_ cv, MARK, items)) {
 		if (items > AvMAX(av) + 1) {
 		    SV **ary = AvALLOC(av);
 		    if (AvARRAY(av) != ary) {

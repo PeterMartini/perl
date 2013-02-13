@@ -2941,7 +2941,7 @@ PP(pp_goto)
 		    }
 		}
 		else SvREFCNT_dec(arg);
-		if (siginit != NULL)
+		if (siginit != 0)
 		    siginit(aTHX_ cv, AvARRAY(arg), AvFILLp(arg) + 1);
 		if (PERLDB_SUB) {	/* Checking curstash breaks DProf. */
 		    Perl_get_db_sub(aTHX_ NULL, cv);
