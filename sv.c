@@ -12426,6 +12426,7 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 			: gv_dup(CvGV(sstr), param);
 
 		CvPADLIST(dstr) = padlist_dup(CvPADLIST(sstr), param);
+		CvSIGNATURE_AV(dstr) = av_dup(CvSIGNATURE_AV(sstr), param);
 		CvOUTSIDE(dstr)	=
 		    CvWEAKOUTSIDE(sstr)
 		    ? cv_dup(    CvOUTSIDE(dstr), param)
