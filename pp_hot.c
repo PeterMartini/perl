@@ -2824,12 +2824,12 @@ try_autoload:
 		}
 		Copy(MARK,AvARRAY(av),items,SV*);
 		AvFILLp(av) = items - 1;
-	    }
 	
-	    while (items--) {
-		if (*MARK)
-		    SvTEMP_off(*MARK);
-		MARK++;
+		while (items--) {
+		    if (*MARK)
+			SvTEMP_off(*MARK);
+		    MARK++;
+		}
 	    }
 	}
 	else if (initsig != 0)
