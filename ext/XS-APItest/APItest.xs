@@ -1124,6 +1124,9 @@ my_ck_rv2cv(pTHX_ OP *o)
     return old_ck_rv2cv(aTHX_ o);
 }
 
+static OP * my_callchecker(pTHX_ OP *o, GV *g, SV *p) { return o; }
+static OP * my_callchecker_sv(pTHX_ OP *o, SV *g, SV *p) { return o; }
+
 #include "const-c.inc"
 
 MODULE = XS::APItest		PACKAGE = XS::APItest
@@ -1131,6 +1134,8 @@ MODULE = XS::APItest		PACKAGE = XS::APItest
 INCLUDE: const-xs.inc
 
 INCLUDE: numeric.xs
+
+INCLUDE: callchecker.xs
 
 MODULE = XS::APItest::utf8	PACKAGE = XS::APItest::utf8
 

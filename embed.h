@@ -77,6 +77,8 @@
 #define ck_entersub_args_list(a)	Perl_ck_entersub_args_list(aTHX_ a)
 #define ck_entersub_args_proto(a,b,c)	Perl_ck_entersub_args_proto(aTHX_ a,b,c)
 #define ck_entersub_args_proto_or_list(a,b,c)	Perl_ck_entersub_args_proto_or_list(aTHX_ a,b,c)
+#define ck_entersub_args_proto_or_list_sv(a,b,c)	Perl_ck_entersub_args_proto_or_list_sv(aTHX_ a,b,c)
+#define ck_entersub_args_proto_sv(a,b,c)	Perl_ck_entersub_args_proto_sv(aTHX_ a,b,c)
 #ifndef PERL_IMPLICIT_CONTEXT
 #define ck_warner		Perl_ck_warner
 #define ck_warner_d		Perl_ck_warner_d
@@ -93,7 +95,9 @@
 #define cv_clone(a)		Perl_cv_clone(aTHX_ a)
 #define cv_const_sv(a)		Perl_cv_const_sv(aTHX_ a)
 #define cv_get_call_checker(a,b,c)	Perl_cv_get_call_checker(aTHX_ a,b,c)
+#define cv_get_call_checker_sv(a,b,c)	Perl_cv_get_call_checker_sv(aTHX_ a,b,c)
 #define cv_set_call_checker(a,b,c)	Perl_cv_set_call_checker(aTHX_ a,b,c)
+#define cv_set_call_checker_sv(a,b,c)	Perl_cv_set_call_checker_sv(aTHX_ a,b,c)
 #define cv_undef(a)		Perl_cv_undef(aTHX_ a)
 #define cx_dump(a)		Perl_cx_dump(aTHX_ a)
 #define cxinc()			Perl_cxinc(aTHX)
@@ -1416,7 +1420,9 @@
 #define apply_attrs_my(a,b,c,d)	S_apply_attrs_my(aTHX_ a,b,c,d)
 #define bad_type_pv(a,b,c,d,e)	S_bad_type_pv(aTHX_ a,b,c,d,e)
 #define bad_type_sv(a,b,c,d,e)	S_bad_type_sv(aTHX_ a,b,c,d,e)
+#define ck_entersub_args_proto_core(a,b,c,d)	S_ck_entersub_args_proto_core(aTHX_ a,b,c,d)
 #define cop_free(a)		S_cop_free(aTHX_ a)
+#define cv_set_call_checker_core(a,b,c)	S_cv_set_call_checker_core(aTHX_ a,b,c)
 #define dup_attrlist(a)		S_dup_attrlist(aTHX_ a)
 #define finalize_op(a)		S_finalize_op(aTHX_ a)
 #define find_and_forget_pmops(a)	S_find_and_forget_pmops(aTHX_ a)
@@ -1439,6 +1445,7 @@
 #define no_fh_allowed(a)	S_no_fh_allowed(aTHX_ a)
 #define op_integerize(a)	S_op_integerize(aTHX_ a)
 #define op_std_init(a)		S_op_std_init(aTHX_ a)
+#define padcv_op_cv(a,b)	S_padcv_op_cv(aTHX_ a,b)
 #define pmtrans(a,b,c)		S_pmtrans(aTHX_ a,b,c)
 #define process_special_blocks(a,b,c,d)	S_process_special_blocks(aTHX_ a,b,c,d)
 #define ref_array_or_hash(a)	S_ref_array_or_hash(aTHX_ a)

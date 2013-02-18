@@ -8,7 +8,7 @@ BEGIN {
     *bar::like = *like;
 }
 no warnings 'deprecated';
-plan 128;
+plan 129;
 
 # -------------------- Errors with feature disabled -------------------- #
 
@@ -86,6 +86,8 @@ sub bar::c { 43 }
 {
   our sub e ($);
   is prototype "::e", '$', 'our sub with proto';
+  eval "e(1,2);";
+  like $@, qq 'Too many arguments for main::e at', 'prototypes honored with parens';
 }
 {
   our sub if() { 42 }
@@ -415,12 +417,12 @@ sub mc { 43 }
 }
 package main;
 {
-  my sub me ($);
+  sub me ($);
   is prototype eval{\&me}, '$', 'my sub with proto';
-  is prototype "me", undef, 'prototype "..." ignores my subs';
+  is prototype "me", '$', 'prototype "..." ignores my subs';
 }
 {
-  my sub if() { 44 }
+  my sub if { 44 }
   my $x = if if if;
   is $x, 44, 'my subs override all keywords';
   package bar;

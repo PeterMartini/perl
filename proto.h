@@ -418,6 +418,20 @@ PERL_CALLCONV OP*	Perl_ck_entersub_args_proto_or_list(pTHX_ OP *entersubop, GV *
 #define PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_OR_LIST	\
 	assert(entersubop); assert(namegv); assert(protosv)
 
+PERL_CALLCONV OP*	Perl_ck_entersub_args_proto_or_list_sv(pTHX_ OP *entersubop, SV *namesv, SV *protosv)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_OR_LIST_SV	\
+	assert(entersubop); assert(namesv); assert(protosv)
+
+PERL_CALLCONV OP*	Perl_ck_entersub_args_proto_sv(pTHX_ OP *entersubop, SV *namesv, SV *protosv)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_SV	\
+	assert(entersubop); assert(namesv); assert(protosv)
+
 PERL_CALLCONV OP *	Perl_ck_eof(pTHX_ OP *o)
 			__attribute__warn_unused_result__
 			__attribute__nonnull__(pTHX_1);
@@ -758,11 +772,25 @@ PERL_CALLCONV void	Perl_cv_get_call_checker(pTHX_ CV *cv, Perl_call_checker *ckf
 #define PERL_ARGS_ASSERT_CV_GET_CALL_CHECKER	\
 	assert(cv); assert(ckfun_p); assert(ckobj_p)
 
+PERL_CALLCONV void	Perl_cv_get_call_checker_sv(pTHX_ CV *cv, Perl_call_checker_sv *ckfun_p, SV **ckobj_p)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CV_GET_CALL_CHECKER_SV	\
+	assert(cv); assert(ckfun_p); assert(ckobj_p)
+
 PERL_CALLCONV void	Perl_cv_set_call_checker(pTHX_ CV *cv, Perl_call_checker ckfun, SV *ckobj)
 			__attribute__nonnull__(pTHX_1)
 			__attribute__nonnull__(pTHX_2)
 			__attribute__nonnull__(pTHX_3);
 #define PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER	\
+	assert(cv); assert(ckfun); assert(ckobj)
+
+PERL_CALLCONV void	Perl_cv_set_call_checker_sv(pTHX_ CV *cv, Perl_call_checker_sv ckfun, SV *ckobj)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER_SV	\
 	assert(cv); assert(ckfun); assert(ckobj)
 
 PERL_CALLCONV void	Perl_cv_undef(pTHX_ CV* cv)
@@ -5863,10 +5891,24 @@ STATIC void	S_bad_type_sv(pTHX_ I32 n, const char *t, SV *namesv, U32 flags, con
 #define PERL_ARGS_ASSERT_BAD_TYPE_SV	\
 	assert(t); assert(namesv); assert(kid)
 
+STATIC OP*	S_ck_entersub_args_proto_core(pTHX_ OP *entersubop, void *namev, SV *protosv, bool name_is_gv)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_CORE	\
+	assert(entersubop); assert(namev); assert(protosv)
+
 STATIC void	S_cop_free(pTHX_ COP *cop)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_COP_FREE	\
 	assert(cop)
+
+STATIC MAGIC*	S_cv_set_call_checker_core(pTHX_ CV *cv, void *ckfun, SV *ckobj)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER_CORE	\
+	assert(cv); assert(ckfun); assert(ckobj)
 
 STATIC OP *	S_dup_attrlist(pTHX_ OP *o)
 			__attribute__nonnull__(pTHX_1);
@@ -5961,6 +6003,11 @@ PERL_STATIC_INLINE OP*	S_op_std_init(pTHX_ OP *o)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_OP_STD_INIT	\
 	assert(o)
+
+STATIC CV*	S_padcv_op_cv(pTHX_ OP *padcvop, SV ** namesv)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_PADCV_OP_CV	\
+	assert(padcvop)
 
 STATIC OP*	S_pmtrans(pTHX_ OP* o, OP* expr, OP* repl)
 			__attribute__nonnull__(pTHX_1)

@@ -268,6 +268,7 @@ should print 123:
 */
 
 typedef OP *(*Perl_call_checker)(pTHX_ OP *, GV *, SV *);
+typedef OP *(*Perl_call_checker_sv)(pTHX_ OP *, SV *, SV *);
 
 /*
  * Local variables:

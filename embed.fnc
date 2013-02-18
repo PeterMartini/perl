@@ -977,13 +977,26 @@ Apda	|OP*	|newWHILEOP	|I32 flags|I32 debuggable|NULLOK LOOP* loop \
 				|NULLOK OP* expr|NULLOK OP* block|NULLOK OP* cont \
 				|I32 has_my
 Apd	|CV*	|rv2cv_op_cv	|NN OP *cvop|U32 flags
+#if defined(PERL_IN_OP_C)
+s	|CV*	|padcv_op_cv	|NN OP *padcvop|NULLOK SV ** namesv
+#endif
 Apd	|OP*	|ck_entersub_args_list|NN OP *entersubop
 Apd	|OP*	|ck_entersub_args_proto|NN OP *entersubop|NN GV *namegv|NN SV *protosv
+AMpd	|OP*	|ck_entersub_args_proto_sv|NN OP *entersubop|NN SV *namesv|NN SV *protosv
+#if defined(PERL_IN_OP_C)
+s	|OP*	|ck_entersub_args_proto_core|NN OP *entersubop|NN void *namev|NN SV *protosv|bool name_is_gv
+#endif
 Apd	|OP*	|ck_entersub_args_proto_or_list|NN OP *entersubop|NN GV *namegv|NN SV *protosv
+AMpd	|OP*	|ck_entersub_args_proto_or_list_sv|NN OP *entersubop|NN SV *namesv|NN SV *protosv
 po	|OP*	|ck_entersub_args_core|NN OP *entersubop|NN GV *namegv \
 				      |NN SV *protosv
 Apd	|void	|cv_get_call_checker|NN CV *cv|NN Perl_call_checker *ckfun_p|NN SV **ckobj_p
+AMpd	|void	|cv_get_call_checker_sv|NN CV *cv|NN Perl_call_checker_sv *ckfun_p|NN SV **ckobj_p
 Apd	|void	|cv_set_call_checker|NN CV *cv|NN Perl_call_checker ckfun|NN SV *ckobj
+AMpd	|void	|cv_set_call_checker_sv|NN CV *cv|NN Perl_call_checker_sv ckfun|NN SV *ckobj
+#if defined(PERL_IN_OP_C)
+s	|MAGIC*	|cv_set_call_checker_core|NN CV *cv|NN void *ckfun|NN SV *ckobj
+#endif
 Apd	|void	|wrap_op_checker|Optype opcode|NN Perl_check_t new_checker|NN Perl_check_t *old_checker_p
 Apa	|PERL_SI*|new_stackinfo|I32 stitems|I32 cxitems
 Ap	|char*	|scan_vstring	|NN const char *s|NN const char *const e \

@@ -8135,6 +8135,7 @@ Perl_newCVREF(pTHX_ I32 flags, OP *o)
 	dVAR;
 	o->op_type = OP_PADCV;
 	o->op_ppaddr = PL_ppaddr[OP_PADCV];
+	o->op_private = (U8)(1 | flags >> 8);
 	return o;
     }
     return newUNOP(OP_RV2CV, flags, scalar(o));
@@ -9890,24 +9891,7 @@ Perl_rv2cv_op_cv(pTHX_ OP *cvop, U32 flags)
 	    gv = NULL;
 	} break;
 	case OP_PADCV: {
-	    PADNAME *name = PAD_COMPNAME(rvop->op_targ);
-	    CV *compcv = PL_compcv;
-	    PADOFFSET off = rvop->op_targ;
-	    while (PadnameOUTER(name)) {
-		assert(PARENT_PAD_INDEX(name));
-		compcv = CvOUTSIDE(PL_compcv);
-		name = PadlistNAMESARRAY(CvPADLIST(compcv))
-			[off = PARENT_PAD_INDEX(name)];
-	    }
-	    assert(!PadnameIsOUR(name));
-	    if (!PadnameIsSTATE(name)) {
-		MAGIC * mg = mg_find(name, PERL_MAGIC_proto);
-		assert(mg);
-		assert(mg->mg_obj);
-		cv = (CV *)mg->mg_obj;
-	    }
-	    else cv =
-		    (CV *)AvARRAY(PadlistARRAY(CvPADLIST(compcv))[1])[off];
+	    cv = padcv_op_cv(rvop, NULL);
 	    gv = NULL;
 	} break;
 	default: {
@@ -9923,6 +9907,33 @@ Perl_rv2cv_op_cv(pTHX_ OP *cvop, U32 flags)
     } else {
 	return cv;
     }
+}
+
+STATIC CV *
+S_padcv_op_cv(pTHX_ OP *padcvop, SV ** namesv)
+{
+    PADOFFSET off = padcvop->op_targ;
+    PADNAME *name = PAD_COMPNAME(off);
+    CV *compcv = PL_compcv;
+    CV *retcv = NULL;
+    while (PadnameOUTER(name)) {
+	assert(PARENT_PAD_INDEX(name));
+	compcv = CvOUTSIDE(PL_compcv);
+	name = PadlistNAMESARRAY(CvPADLIST(compcv))[off = PARENT_PAD_INDEX(name)];
+    }
+    assert(!PadnameIsOUR(name));
+    if (!PadnameIsSTATE(name)) {
+	MAGIC * mg = mg_find(name, PERL_MAGIC_proto);
+	assert(mg);
+	assert(mg->mg_obj);
+	retcv = (CV *)mg->mg_obj;
+    }
+    else retcv = (CV *)AvARRAY(PadlistARRAY(CvPADLIST(compcv))[1])[off];
+    if (namesv)
+	*namesv = sv_2mortal(newSVpvn_utf8(
+	    PadnamePV(name)+1,PadnameLEN(name)-1, PadnameUTF8(name)
+	));
+    return retcv;
 }
 
 /*
@@ -9986,6 +9997,29 @@ by the name defined by the I<namegv> parameter.
 OP *
 Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 {
+    PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO;
+    return ck_entersub_args_proto_core(entersubop, (void *)namegv, protosv, TRUE);
+}
+
+/*
+=for apidoc AMpd|OP *|ck_entersub_args_proto_sv|OP *entersubop|SV *namegv|SV *protosv
+
+An alternative interface for L</ck_entersub_args_proto> which takes a C<SV*>
+instead of a C<GV*>.
+
+=cut
+*/
+
+OP *
+Perl_ck_entersub_args_proto_sv(pTHX_ OP *entersubop, SV *namesv, SV *protosv)
+{
+    PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_SV;
+    return ck_entersub_args_proto_core(entersubop, (void *)namesv, protosv, FALSE);
+}
+
+STATIC OP *
+S_ck_entersub_args_proto_core(pTHX_ OP *entersubop, void *namev, SV *protosv, bool name_is_gv)
+{
     STRLEN proto_len;
     const char *proto, *proto_end;
     OP *aop, *prev, *cvop;
@@ -9993,7 +10027,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
     I32 arg = 0;
     I32 contextclass = 0;
     const char *e = NULL;
-    PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO;
+    SV * namesv = (name_is_gv ? gv_ename((GV *)namev) : (SV *)namev);
     if (SvTYPE(protosv) == SVt_PVCV ? !SvPOK(protosv) : !SvOK(protosv))
 	Perl_croak(aTHX_ "panic: ck_entersub_args_proto CV with no proto, "
 		   "flags=%lx", (unsigned long) SvFLAGS(protosv));
@@ -10019,7 +10053,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 	    o3 = aop;
 
 	if (proto >= proto_end)
-	    return too_many_arguments_sv(entersubop, gv_ename(namegv), 0);
+	    return too_many_arguments_sv(entersubop, namesv, 0);
 
 	switch (*proto) {
 	    case ';':
@@ -10046,7 +10080,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 		if (o3->op_type != OP_REFGEN && o3->op_type != OP_UNDEF)
 		    bad_type_sv(arg,
 			    arg == 1 ? "block or sub {}" : "sub {}",
-			    gv_ename(namegv), 0, o3);
+			    namesv, 0, o3);
 		break;
 	    case '*':
 		/* '*' allows any scalar type, including bareword */
@@ -10133,7 +10167,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 				    )) goto wrapref;
 			    bad_type_sv(arg, Perl_form(aTHX_ "one of %.*s",
 					(int)(end - p), p),
-				    gv_ename(namegv), 0, o3);
+				    namesv, 0, o3);
 			} else
 			    goto oops;
 			break;
@@ -10141,13 +10175,13 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 			if (o3->op_type == OP_RV2GV)
 			    goto wrapref;
 			if (!contextclass)
-			    bad_type_sv(arg, "symbol", gv_ename(namegv), 0, o3);
+			    bad_type_sv(arg, "symbol", namesv, 0, o3);
 			break;
 		    case '&':
 			if (o3->op_type == OP_ENTERSUB)
 			    goto wrapref;
 			if (!contextclass)
-			    bad_type_sv(arg, "subroutine entry", gv_ename(namegv), 0,
+			    bad_type_sv(arg, "subroutine entry", namesv, 0,
 				    o3);
 			break;
 		    case '$':
@@ -10163,7 +10197,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 				    OP_READ,  /* not entersub */
 				    OP_LVALUE_NO_CROAK
 			       )) goto wrapref;
-			    bad_type_sv(arg, "scalar", gv_ename(namegv), 0, o3);
+			    bad_type_sv(arg, "scalar", namesv, 0, o3);
 			}
 			break;
 		    case '@':
@@ -10171,14 +10205,14 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 				o3->op_type == OP_PADAV)
 			    goto wrapref;
 			if (!contextclass)
-			    bad_type_sv(arg, "array", gv_ename(namegv), 0, o3);
+			    bad_type_sv(arg, "array", namesv, 0, o3);
 			break;
 		    case '%':
 			if (o3->op_type == OP_RV2HV ||
 				o3->op_type == OP_PADHV)
 			    goto wrapref;
 			if (!contextclass)
-			    bad_type_sv(arg, "hash", gv_ename(namegv), 0, o3);
+			    bad_type_sv(arg, "hash", namesv, 0, o3);
 			break;
 		    wrapref:
 			{
@@ -10204,10 +10238,8 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 		continue;
 	    default:
 	    oops: {
-                SV* const tmpsv = sv_newmortal();
-                gv_efullname3(tmpsv, namegv, NULL);
 		Perl_croak(aTHX_ "Malformed prototype for %"SVf": %"SVf,
-			SVfARG(tmpsv), SVfARG(protosv));
+			SVfARG(namesv), SVfARG(protosv));
             }
 	}
 
@@ -10223,7 +10255,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
     }
     if (!optional && proto_end > proto &&
 	(*proto != '@' && *proto != '%' && *proto != ';' && *proto != '_'))
-	return too_few_arguments_sv(entersubop, gv_ename(namegv), 0);
+	return too_few_arguments_sv(entersubop, namesv, 0);
     return entersubop;
 }
 
@@ -10261,6 +10293,27 @@ Perl_ck_entersub_args_proto_or_list(pTHX_ OP *entersubop,
     PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_OR_LIST;
     if (SvTYPE(protosv) == SVt_PVCV ? SvPOK(protosv) : SvOK(protosv))
 	return ck_entersub_args_proto(entersubop, namegv, protosv);
+    else
+	return ck_entersub_args_list(entersubop);
+}
+
+/*
+=for apidoc AMpd|OP *|ck_entersub_args_proto_or_list_sv|OP *entersubop|SV *namesv|SV *protosv
+
+Equivalent to L</ck_entersub_args_proto_or_list>, but passes the name of
+the function as an C<SV*> rather than a C<GV*>, since not all functions
+have a C<GV> to store a name.
+
+=cut
+*/
+
+OP *
+Perl_ck_entersub_args_proto_or_list_sv(pTHX_ OP *entersubop,
+	SV *namesv, SV *protosv)
+{
+    PERL_ARGS_ASSERT_CK_ENTERSUB_ARGS_PROTO_OR_LIST_SV;
+    if (SvTYPE(protosv) == SVt_PVCV ? SvPOK(protosv) : SvOK(protosv))
+	return ck_entersub_args_proto_sv(entersubop, namesv, protosv);
     else
 	return ck_entersub_args_list(entersubop);
 }
@@ -10385,6 +10438,26 @@ and the SV parameter is I<cv> itself.  This implements standard
 prototype processing.  It can be changed, for a particular subroutine,
 by L</cv_set_call_checker>.
 
+See L</cv_get_call_checker_sv> for an alternative version which uses
+I<Perl_call_checker_sv> instead of I<Perl_call_checker>.
+
+There are two differences between the functions:
+
+=over 4
+
+=item *
+
+The L</cv_get_call_checker_sv> returns a function which takes
+an C<SV*> instead of a C<GV*> (set by L</cv_get_call_checker_sv>
+
+=item *
+
+L</cv_get_call_checker> will croak if the call checker is not the
+default and is not the right type; L</cv_get_call_checker_sv>
+will set the function pointer to NULL instead.
+
+=back
+
 =cut
 */
 
@@ -10394,13 +10467,83 @@ Perl_cv_get_call_checker(pTHX_ CV *cv, Perl_call_checker *ckfun_p, SV **ckobj_p)
     MAGIC *callmg;
     PERL_ARGS_ASSERT_CV_GET_CALL_CHECKER;
     callmg = SvMAGICAL((SV*)cv) ? mg_find((SV*)cv, PERL_MAGIC_checkcall) : NULL;
-    if (callmg) {
+    if (callmg && callmg->mg_private == 0) {
 	*ckfun_p = DPTR2FPTR(Perl_call_checker, callmg->mg_ptr);
 	*ckobj_p = callmg->mg_obj;
+    } else if (callmg && callmg->mg_private == 1) {
+	/* If it's still set to the default, return the origianl default call checker */
+	if (callmg->mg_ptr == (char *)Perl_ck_entersub_args_proto_or_list_sv) {
+	    *ckfun_p = Perl_ck_entersub_args_proto_or_list;
+	    *ckobj_p = (SV*)cv;
+	} else {
+	    SV *xpt = Perl_newSVpvf(aTHX_
+	              "cv_get_call_checker cannot return a value set by cv_get_call_checker_sv");
+	    Perl_sv_2mortal(aTHX_ xpt);
+	    Perl_croak_sv(aTHX_ xpt);
+	}
     } else {
 	*ckfun_p = Perl_ck_entersub_args_proto_or_list;
 	*ckobj_p = (SV*)cv;
     }
+}
+
+/*
+=for apidoc AMpd|void|cv_get_call_checker_sv|CV *cv|Perl_call_checker_sv *ckfun_p|SV **ckobj_p
+
+See L</cv_get_call_checker> for details.
+
+=cut
+*/
+
+void
+Perl_cv_get_call_checker_sv(pTHX_ CV *cv, Perl_call_checker_sv *ckfun_p, SV **ckobj_p)
+{
+    MAGIC *callmg;
+    PERL_ARGS_ASSERT_CV_GET_CALL_CHECKER_SV;
+    callmg = SvMAGICAL((SV*)cv) ? mg_find((SV*)cv, PERL_MAGIC_checkcall) : NULL;
+    if (callmg && callmg->mg_private == 1) {
+	*ckfun_p = DPTR2FPTR(Perl_call_checker_sv, callmg->mg_ptr);
+	*ckobj_p = callmg->mg_obj;
+    } else if (callmg && callmg->mg_private == 0) {
+	*ckfun_p = NULL;
+	*ckobj_p = callmg->mg_obj;
+    } else {
+	*ckfun_p = Perl_ck_entersub_args_proto_or_list_sv;
+	*ckobj_p = (SV*)cv;
+    }
+}
+
+/* Utility function for common code between cv_set_call_checker(|_sv) */
+
+STATIC MAGIC *
+S_cv_set_call_checker_core(pTHX_ CV *cv, void *ckfun, SV *ckobj)
+{
+    PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER_CORE;
+    if (ckfun == Perl_ck_entersub_args_proto_or_list && ckobj == (SV*)cv) {
+	if (SvMAGICAL((SV*)cv))
+	    mg_free_type((SV*)cv, PERL_MAGIC_checkcall);
+    } else if (ckfun == Perl_ck_entersub_args_proto_or_list_sv && ckobj == (SV*)cv) {
+	/* If this version is desired, cv_get_call_checker will return it */
+        if (SvMAGICAL((SV*)cv))
+	    mg_free_type((SV*)cv, PERL_MAGIC_checkcall);
+    } else {
+	MAGIC *callmg;
+	sv_magic((SV*)cv, &PL_sv_undef, PERL_MAGIC_checkcall, NULL, 0);
+	callmg = mg_find((SV*)cv, PERL_MAGIC_checkcall);
+	if (callmg->mg_flags & MGf_REFCOUNTED) {
+	    SvREFCNT_dec(callmg->mg_obj);
+	    callmg->mg_flags &= ~MGf_REFCOUNTED;
+	}
+	callmg->mg_ptr = FPTR2DPTR(char *, ckfun);
+	callmg->mg_obj = ckobj;
+	if (ckobj != (SV*)cv) {
+	    SvREFCNT_inc_simple_void_NN(ckobj);
+	    callmg->mg_flags |= MGf_REFCOUNTED;
+	}
+	callmg->mg_flags |= MGf_COPY;
+	return callmg;
+    }
+    return NULL;
 }
 
 /*
@@ -10427,6 +10570,16 @@ such as to a call to a different subroutine or to a method call.
 The current setting for a particular CV can be retrieved by
 L</cv_get_call_checker>.
 
+See L</cv_set_call_checker_sv> for an alternative version which uses
+I<Perl_call_checker_sv> instead of I<Perl_call_checker>.  If
+L</cv_set_call_checker_sv> is used to set the call checker, 
+L</cv_get_call_checker_sv> must be used to retrieve it.  Likewise,
+if L</cv_set_call_checker> is used to set the call checker,
+L</cv_get_call_checker> must be used to retrieve it.  The sole
+exception to this rule is the default call checker; if the call checker
+is never set, or is set back to the default, each get call checker
+functions will return the appropriate version.
+
 =cut
 */
 
@@ -10434,25 +10587,26 @@ void
 Perl_cv_set_call_checker(pTHX_ CV *cv, Perl_call_checker ckfun, SV *ckobj)
 {
     PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER;
-    if (ckfun == Perl_ck_entersub_args_proto_or_list && ckobj == (SV*)cv) {
-	if (SvMAGICAL((SV*)cv))
-	    mg_free_type((SV*)cv, PERL_MAGIC_checkcall);
-    } else {
-	MAGIC *callmg;
-	sv_magic((SV*)cv, &PL_sv_undef, PERL_MAGIC_checkcall, NULL, 0);
-	callmg = mg_find((SV*)cv, PERL_MAGIC_checkcall);
-	if (callmg->mg_flags & MGf_REFCOUNTED) {
-	    SvREFCNT_dec(callmg->mg_obj);
-	    callmg->mg_flags &= ~MGf_REFCOUNTED;
-	}
-	callmg->mg_ptr = FPTR2DPTR(char *, ckfun);
-	callmg->mg_obj = ckobj;
-	if (ckobj != (SV*)cv) {
-	    SvREFCNT_inc_simple_void_NN(ckobj);
-	    callmg->mg_flags |= MGf_REFCOUNTED;
-	}
-	callmg->mg_flags |= MGf_COPY;
-    }
+    cv_set_call_checker_core(cv, (void *)ckfun, ckobj);
+}
+
+/*
+=for apidoc Am|void|cv_set_call_checker_sv|CV *cv|Perl_call_checker_sv *ckfun_p|SV **ckobj_p
+
+See L</cv_set_call_checker> for more details.  The difference between the two versions is
+limited to the I<Perl_call_checker_sv> function taking a SV * instead of a GV * for the name
+of the function, since not all functions will have a GV.
+
+=cut
+*/
+
+void
+Perl_cv_set_call_checker_sv(pTHX_ CV *cv, Perl_call_checker_sv ckfun, SV *ckobj)
+{
+    PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER_SV;
+    MAGIC * callmg = cv_set_call_checker_core(cv, (void *)ckfun, ckobj);
+    if (callmg)
+	callmg->mg_private = 1;
 }
 
 OP *
@@ -10461,6 +10615,7 @@ Perl_ck_subr(pTHX_ OP *o)
     OP *aop, *cvop;
     CV *cv;
     GV *namegv;
+    SV *namesv;
 
     PERL_ARGS_ASSERT_CK_SUBR;
 
@@ -10469,8 +10624,14 @@ Perl_ck_subr(pTHX_ OP *o)
 	aop = cUNOPx(aop)->op_first;
     aop = aop->op_sibling;
     for (cvop = aop; cvop->op_sibling; cvop = cvop->op_sibling) ;
-    cv = rv2cv_op_cv(cvop, RV2CVOPCV_MARK_EARLY);
-    namegv = cv ? (GV*)rv2cv_op_cv(cvop, RV2CVOPCV_RETURN_NAME_GV) : NULL;
+    if (cvop->op_type == OP_PADCV && !(cvop->op_private & OPpENTERSUB_AMPER)) {
+	cv = padcv_op_cv(cvop, &namesv);
+	namegv = NULL;
+    } else {
+	cv = rv2cv_op_cv(cvop, RV2CVOPCV_MARK_EARLY);
+	namegv = cv ? (GV*)rv2cv_op_cv(cvop, RV2CVOPCV_RETURN_NAME_GV) : NULL;
+	namesv = namegv ? gv_ename(namegv) : sv_2mortal(newSVpvs("__ANON__::__ANON__"));
+    }
 
     o->op_private &= ~1;
     o->op_private |= OPpENTERSUB_HASTARG;
@@ -10496,20 +10657,25 @@ Perl_ck_subr(pTHX_ OP *o)
 	Perl_call_checker ckfun;
 	SV *ckobj;
 	cv_get_call_checker(cv, &ckfun, &ckobj);
-	if (!namegv) { /* expletive! */
-	    /* XXX The call checker API is public.  And it guarantees that
-		   a GV will be provided with the right name.  So we have
-		   to create a GV.  But it is still not correct, as its
-		   stringification will include the package.  What we
-		   really need is a new call checker API that accepts a
-		   GV or string (or GV or CV). */
-	    HEK * const hek = CvNAME_HEK(cv);
-	    assert(hek);
-	    namegv = (GV *)sv_newmortal();
-	    gv_init_pvn(namegv, PL_curstash, HEK_KEY(hek), HEK_LEN(hek),
-			SVf_UTF8 * !!HEK_UTF8(hek));
+	/* If a GV* call checker is in place, use it, otherwise use the SV* style */
+	if (ckfun != Perl_ck_entersub_args_proto_or_list) {
+	    if (!namegv) { /* expletive! */
+		/* XXX The call checker API is public.  And it guarantees that
+		       a GV will be provided with the right name.  So we have
+		       to create a GV.  But it is still not correct, as its
+		       stringification will include the package. */
+		HEK * const hek = CvNAME_HEK(cv);
+		assert(hek);
+		namegv = (GV *)sv_newmortal();
+		gv_init_pvn(namegv, PL_curstash, HEK_KEY(hek), HEK_LEN(hek),
+			    SVf_UTF8 * !!HEK_UTF8(hek));
+	    }
+	    return ckfun(aTHX_ o, namegv, ckobj);
+	} else {
+	    Perl_call_checker_sv ckfun;
+	    cv_get_call_checker_sv(cv, &ckfun, &ckobj);
+	    return ckfun(aTHX_ o, namesv, ckobj);
 	}
-	return ckfun(aTHX_ o, namegv, ckobj);
     }
 }
 
