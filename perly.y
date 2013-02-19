@@ -104,6 +104,7 @@
 %nonassoc <i_tkval> PREC_LOW
 %nonassoc LOOPEX
 
+%left <opval> CUSTOMINFIXEXPR
 %left <i_tkval> OROP DOROP
 %left <i_tkval> ANDOP
 %right <i_tkval> NOTOP
@@ -112,6 +113,7 @@
 %right <i_tkval> ASSIGNOP
 %right <i_tkval> '?' ':'
 %nonassoc DOTDOT YADAYADA
+%left <opval> CUSTOMINFIXTERM
 %left <i_tkval> OROR DORDOR
 %left <i_tkval> ANDAND
 %left <i_tkval> BITOROP
@@ -751,6 +753,14 @@ expr	:	expr ANDOP expr
 			{ $$ = newLOGOP(OP_DOR, 0, $1, $3);
 			  TOKEN_GETMAD($2,$$,'o');
 			}
+	|	expr CUSTOMINFIXEXPR expr
+			{
+			  ((BINOP*)$2)->op_first = $1;
+			  $2->op_sibling = $3;
+			  PL_op = $2;
+			  $$ = PL_op->op_ppaddr(aTHX);
+			  TOKEN_GETMAD($2,$$,'o');
+			}
 	|	listexpr %prec PREC_LOW
 	;
 
@@ -1019,6 +1029,14 @@ termbinop:	term ASSIGNOP term                     /* $x = $y */
 				($$->op_type == OP_NOT
 				    ? ((UNOP*)$$)->op_first : $$),
 				'~');
+			}
+	|	term CUSTOMINFIXTERM term
+			{
+			  ((BINOP*)$2)->op_first = $1;
+			  $2->op_sibling = $3;
+			  PL_op = $2;
+			  $$ = PL_op->op_ppaddr(aTHX);
+			  TOKEN_GETMAD($2,$$,'o');
 			}
     ;
 

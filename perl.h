@@ -4967,9 +4967,11 @@ typedef void(*Perl_cpeep_t)(pTHX_ OP *, OP *);
 
 typedef void(*globhook_t)(pTHX);
 
-#define KEYWORD_PLUGIN_DECLINE 0
-#define KEYWORD_PLUGIN_STMT    1
-#define KEYWORD_PLUGIN_EXPR    2
+#define KEYWORD_PLUGIN_DECLINE    0
+#define KEYWORD_PLUGIN_STMT       1
+#define KEYWORD_PLUGIN_EXPR       2
+#define KEYWORD_PLUGIN_INFIX_TERM 3
+#define KEYWORD_PLUGIN_INFIX_EXPR 4
 
 /* Interpreter exitlist entry */
 typedef struct exitlistentry {

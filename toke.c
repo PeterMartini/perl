@@ -6861,6 +6861,14 @@ Perl_yylex(pTHX)
 		CLINE;
 		PL_expect = XOPERATOR;
 		return REPORT(PLUGEXPR);
+	    } else if (result == KEYWORD_PLUGIN_INFIX_TERM) {
+		pl_yylval.opval = o;
+		CLINE;
+                OPERATOR(CUSTOMINFIXTERM);
+	    } else if (result == KEYWORD_PLUGIN_INFIX_EXPR) {
+		pl_yylval.opval = o;
+		CLINE;
+                OPERATOR(CUSTOMINFIXEXPR);
 	    } else {
 		Perl_croak(aTHX_ "Bad plugin affecting keyword '%s'",
 					PL_tokenbuf);
