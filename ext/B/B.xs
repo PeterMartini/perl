@@ -1873,6 +1873,13 @@ const_sv(cv)
     PPCODE:
 	PUSHs(make_sv_object(aTHX_ (SV *)cv_const_sv(cv)));
 
+void
+get_signature(cv)
+	B::CV	cv
+    PPCODE:
+	SV * sig = cv_get_signature_pv(cv);
+	PUSHs(sig ? sv_2mortal(sig) : &PL_sv_undef);
+
 MODULE = B	PACKAGE = B::HV		PREFIX = Hv
 
 STRLEN
