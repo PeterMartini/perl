@@ -108,6 +108,8 @@ my %mg =
      ext => { char => '~', desc => 'Available for use by extensions' },
      checkcall => { char => ']', value_magic => 1, vtable => 'checkcall',
 		    desc => 'inlining/mutation of call to this CV'},
+     subsig    => { char => '(', value_magic => 1, vtable => 'subsig',
+		    desc => "Storage for string representing sub signature. Should only be accessed through cv_[gs]et_signature_pv" },
 );
 
 # These have a subtly different "namespace" from the magic types.
@@ -144,6 +146,7 @@ my %sig =
      'hintselem' => {set => 'sethint', clear => 'clearhint'},
      'hints' => {clear => 'clearhints'},
      'checkcall' => {copy => 'copycallchecker'},
+     'subsig' => {copy => 'copysig'},
 );
 
 my ($vt, $raw, $names) = map {

@@ -67,7 +67,6 @@ my_cxt_setsv_p(SV* sv _pMY_CXT)
     MY_CXT.sv = sv;
 }
 
-
 /* from exception.c */
 int apitest_exception(int);
 
@@ -637,6 +636,16 @@ THX_ck_entersub_pad_scalar(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 	padop->op_targ = padoff;
 	return padop;
     }
+}
+
+STATIC OP *(*apitest_old_ck_anoncode)(pTHX_ OP *) = 0;
+STATIC OP *
+apitest_anoncode_setproto(pTHX_ OP * o)
+{
+    SV *ret = cop_hints_fetch_pvs(PL_curcop, "proto_sig", 0);
+		if (ret && SvPOK(ret))
+        cv_set_signature_pv((CV *)cSVOPo_sv, ret);
+    return apitest_old_ck_anoncode(aTHX_ o);
 }
 
 /** RPN keyword parser **/
@@ -1234,6 +1243,7 @@ BOOT:
     newXS("XS::APItest::XSUB::XS_VERSION_undef", XS_XS__APItest__XSUB_XS_VERSION_undef, __FILE__);
     newXS("XS::APItest::XSUB::XS_VERSION_empty", XS_XS__APItest__XSUB_XS_VERSION_empty, __FILE__);
     newXS("XS::APItest::XSUB::XS_APIVERSION_invalid", XS_XS__APItest__XSUB_XS_APIVERSION_invalid, __FILE__);
+    wrap_op_checker(OP_ANONCODE, apitest_anoncode_setproto, &apitest_old_ck_anoncode);
 
 void
 XS_VERSION_defined(...)
@@ -4667,3 +4677,21 @@ test_toTITLE_utf8(SV * p)
         RETVAL = av;
     OUTPUT:
         RETVAL
+
+MODULE = XS::APItest		PACKAGE = XS::APItest
+
+SV *
+test_cv_get_signature_pv(CV * cv)
+    CODE:
+        RETVAL = cv_get_signature_pv(cv);
+    OUTPUT:
+        RETVAL
+
+void
+test_cv_set_signature_pv(CV * cv, ...)
+    PREINIT:
+        SV * pv = NULL;
+    CODE:
+        if (items > 1 && ST(1) != &PL_sv_undef)
+            pv = ST(1);
+        cv_set_signature_pv(cv, pv);

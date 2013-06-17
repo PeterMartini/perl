@@ -3362,6 +3362,21 @@ Perl_magic_copycallchecker(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
     return 1;
 }
 
+int
+Perl_magic_copysig(pTHX_ SV *sv, MAGIC *mg, SV *nsv, const char *name, I32 namlen)
+{
+    MAGIC *nmg;
+
+    PERL_ARGS_ASSERT_MAGIC_COPYSIG;
+    PERL_UNUSED_ARG(sv);
+    PERL_UNUSED_ARG(name);
+    PERL_UNUSED_ARG(namlen);
+
+    sv_magic(nsv, mg->mg_obj, mg->mg_type, NULL, 0);
+
+    return 1;
+}
+
 /*
  * Local variables:
  * c-indentation-style: bsd

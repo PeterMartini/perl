@@ -1058,6 +1058,11 @@ will be lost.
  %  PERL_MAGIC_rhash          (none)         extra data for restricted
                                              hashes
  &  PERL_MAGIC_proto          (none)         my sub prototype CV
+ (  PERL_MAGIC_subsig         vtbl_subsig    Storage for string
+                                             representing sub signature.
+                                             Should only be accessed
+                                             through
+                                             cv_[gs]et_signature_pv
  .  PERL_MAGIC_pos            vtbl_pos       pos() lvalue
  :  PERL_MAGIC_symtab         (none)         extra data for symbol
                                              tables

@@ -758,12 +758,22 @@ PERL_CALLCONV void	Perl_cv_get_call_checker(pTHX_ CV *cv, Perl_call_checker *ckf
 #define PERL_ARGS_ASSERT_CV_GET_CALL_CHECKER	\
 	assert(cv); assert(ckfun_p); assert(ckobj_p)
 
+PERL_STATIC_INLINE SV*	S_cv_get_signature_pv(pTHX_ CV *cv)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_CV_GET_SIGNATURE_PV	\
+	assert(cv)
+
 PERL_CALLCONV void	Perl_cv_set_call_checker(pTHX_ CV *cv, Perl_call_checker ckfun, SV *ckobj)
 			__attribute__nonnull__(pTHX_1)
 			__attribute__nonnull__(pTHX_2)
 			__attribute__nonnull__(pTHX_3);
 #define PERL_ARGS_ASSERT_CV_SET_CALL_CHECKER	\
 	assert(cv); assert(ckfun); assert(ckobj)
+
+PERL_STATIC_INLINE void	S_cv_set_signature_pv(pTHX_ CV *cv, SV *pv)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_CV_SET_SIGNATURE_PV	\
+	assert(cv)
 
 PERL_CALLCONV void	Perl_cv_undef(pTHX_ CV* cv)
 			__attribute__nonnull__(pTHX_1);
@@ -2187,6 +2197,13 @@ PERL_CALLCONV int	Perl_magic_copycallchecker(pTHX_ SV* sv, MAGIC *mg, SV *nsv, c
 			__attribute__nonnull__(pTHX_2)
 			__attribute__nonnull__(pTHX_3);
 #define PERL_ARGS_ASSERT_MAGIC_COPYCALLCHECKER	\
+	assert(sv); assert(mg); assert(nsv)
+
+PERL_CALLCONV int	Perl_magic_copysig(pTHX_ SV* sv, MAGIC *mg, SV *nsv, const char *name, I32 namlen)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2)
+			__attribute__nonnull__(pTHX_3);
+#define PERL_ARGS_ASSERT_MAGIC_COPYSIG	\
 	assert(sv); assert(mg); assert(nsv)
 
 PERL_CALLCONV void	Perl_magic_dump(pTHX_ const MAGIC *mg);

@@ -14,6 +14,8 @@
       "/* rhash '%' extra data for restricted hashes */" },
     { '&', "magic_vtable_max",
       "/* proto '&' my sub prototype CV */" },
+    { '(', "want_vtbl_subsig | PERL_MAGIC_VALUE_MAGIC",
+      "/* subsig '(' Storage for string representing sub signature. Should only be accessed through cv_[gs]et_signature_pv */" },
     { '.', "want_vtbl_pos | PERL_MAGIC_VALUE_MAGIC",
       "/* pos '.' pos() lvalue */" },
     { ':', "magic_vtable_max | PERL_MAGIC_VALUE_MAGIC",

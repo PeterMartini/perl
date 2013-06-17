@@ -16,6 +16,7 @@
 #define PERL_MAGIC_arylen         '#' /* Array length ($#ary) */
 #define PERL_MAGIC_rhash          '%' /* extra data for restricted hashes */
 #define PERL_MAGIC_proto          '&' /* my sub prototype CV */
+#define PERL_MAGIC_subsig         '(' /* Storage for string representing sub signature. Should only be accessed through cv_[gs]et_signature_pv */
 #define PERL_MAGIC_pos            '.' /* pos() lvalue */
 #define PERL_MAGIC_symtab         ':' /* extra data for symbol tables */
 #define PERL_MAGIC_backref        '<' /* for weak ref data */
@@ -81,6 +82,7 @@ enum {		/* pass one of these to get_vtbl */
     want_vtbl_regdatum,
     want_vtbl_regexp,
     want_vtbl_sigelem,
+    want_vtbl_subsig,
     want_vtbl_substr,
     want_vtbl_sv,
     want_vtbl_taint,
@@ -115,6 +117,7 @@ EXTCONST char * const PL_magic_vtable_names[magic_vtable_max] = {
     "regdatum",
     "regexp",
     "sigelem",
+    "subsig",
     "substr",
     "sv",
     "taint",
@@ -176,6 +179,7 @@ EXT_MGVTBL PL_magic_vtables[magic_vtable_max] = {
 #else
   { 0, 0, 0, 0, 0, 0, 0, 0 },
 #endif
+  { 0, 0, 0, 0, 0, Perl_magic_copysig, 0, 0 },
   { Perl_magic_getsubstr, Perl_magic_setsubstr, 0, 0, 0, 0, 0, 0 },
   { Perl_magic_get, Perl_magic_set, 0, 0, 0, 0, 0, 0 },
   { Perl_magic_gettaint, Perl_magic_settaint, 0, 0, 0, 0, 0, 0 },
@@ -215,6 +219,7 @@ EXT_MGVTBL PL_magic_vtables[magic_vtable_max];
 #define PL_vtbl_regdatum PL_magic_vtables[want_vtbl_regdatum]
 #define PL_vtbl_regexp PL_magic_vtables[want_vtbl_regexp]
 #define PL_vtbl_sigelem PL_magic_vtables[want_vtbl_sigelem]
+#define PL_vtbl_subsig PL_magic_vtables[want_vtbl_subsig]
 #define PL_vtbl_substr PL_magic_vtables[want_vtbl_substr]
 #define PL_vtbl_sv PL_magic_vtables[want_vtbl_sv]
 #define PL_vtbl_taint PL_magic_vtables[want_vtbl_taint]

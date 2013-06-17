@@ -32,6 +32,46 @@ S_CvDEPTHp(const CV * const sv)
     return &((XPVCV*)SvANY(sv))->xcv_depth;
 }
 
+/*
+=for apidoc Aid|SV *|cv_get_signature_pv|CV * cv
+Returns an SV* containing a string description of the signature
+of the CV, or NULL if there is none attached.
+
+=for apidoc Aid|SV *|cv_set_signature_pv|CV * cv|SV * pv
+Stores a duplicate of C<pv> as a string description of the signature
+of the CV. If C<pv> is NULL, the description is removed.
+
+=cut
+*/
+
+PERL_STATIC_INLINE SV *
+S_cv_get_signature_pv(pTHX_ CV * cv) 
+{
+    MAGIC * sigmagic;
+    PERL_ARGS_ASSERT_CV_GET_SIGNATURE_PV;
+
+    sigmagic = SvMAGICAL((SV*)cv) ? mg_find((SV*)cv, PERL_MAGIC_subsig) : NULL;
+    if (!sigmagic || !sigmagic->mg_obj)
+        return NULL;
+
+    return SvREFCNT_inc_simple_NN(sigmagic->mg_obj);
+}
+PERL_STATIC_INLINE void
+S_cv_set_signature_pv(pTHX_ CV * cv, SV * pv) 
+{
+    MAGIC * sigmagic;
+    PERL_ARGS_ASSERT_CV_SET_SIGNATURE_PV;
+
+    if (SvMAGICAL((SV*)cv) && mg_find((SV*)cv, PERL_MAGIC_subsig))
+        sv_unmagic((SV*)cv, PERL_MAGIC_subsig);
+    if (pv) {
+        sv_magic((SV*)cv, sv_2mortal(newSVsv(pv)), PERL_MAGIC_subsig, NULL, 0); 
+        sigmagic = mg_find((SV*)cv, PERL_MAGIC_subsig);
+        sigmagic->mg_flags |= MGf_COPY;
+    }
+}
+
+
 /* ----------------------------- regexp.h ----------------------------- */
 
 PERL_STATIC_INLINE struct regexp *

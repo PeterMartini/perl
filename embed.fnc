@@ -772,6 +772,7 @@ p	|int	|magic_clearpack|NN SV* sv|NN MAGIC* mg
 p	|int	|magic_clearsig	|NN SV* sv|NN MAGIC* mg
 p	|int	|magic_copycallchecker|NN SV* sv|NN MAGIC *mg|NN SV *nsv \
 				      |NULLOK const char *name|I32 namlen
+p	|int	|magic_copysig	|NN SV* sv|NN MAGIC *mg|NN SV *nsv|NULLOK const char *name|I32 namlen
 p	|int	|magic_existspack|NN SV* sv|NN const MAGIC* mg
 p	|int	|magic_freeovrld|NN SV* sv|NN MAGIC* mg
 p	|int	|magic_get	|NN SV* sv|NN MAGIC* mg
@@ -981,6 +982,8 @@ po	|OP*	|ck_entersub_args_core|NN OP *entersubop|NN GV *namegv \
 				      |NN SV *protosv
 Apd	|void	|cv_get_call_checker|NN CV *cv|NN Perl_call_checker *ckfun_p|NN SV **ckobj_p
 Apd	|void	|cv_set_call_checker|NN CV *cv|NN Perl_call_checker ckfun|NN SV *ckobj
+Aid	|SV*	|cv_get_signature_pv|NN CV *cv
+Aid	|void	|cv_set_signature_pv|NN CV *cv|NULLOK SV *pv
 Apd	|void	|wrap_op_checker|Optype opcode|NN Perl_check_t new_checker|NN Perl_check_t *old_checker_p
 Apa	|PERL_SI*|new_stackinfo|I32 stitems|I32 cxitems
 Ap	|char*	|scan_vstring	|NN const char *s|NN const char *const e \
