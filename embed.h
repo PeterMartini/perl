@@ -1444,6 +1444,7 @@
 #define listkids(a)		S_listkids(aTHX_ a)
 #define looks_like_bool(a)	S_looks_like_bool(aTHX_ a)
 #define modkids(a,b)		S_modkids(aTHX_ a,b)
+#define move_proto_attr(a,b,c)	S_move_proto_attr(aTHX_ a,b,c)
 #define my_kid(a,b,c)		S_my_kid(aTHX_ a,b,c)
 #define newDEFSVOP()		S_newDEFSVOP(aTHX)
 #define newGIVWHENOP(a,b,c,d,e)	S_newGIVWHENOP(aTHX_ a,b,c,d,e)
