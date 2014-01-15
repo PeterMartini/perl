@@ -3294,6 +3294,15 @@ dist/SelfLoader/lib/SelfLoader.pm	Load functions only on demand
 dist/SelfLoader/t/01SelfLoader.t	See if SelfLoader works
 dist/SelfLoader/t/02SelfLoader-buggy.t	See if SelfLoader works
 dist/SelfLoader/t/03taint.t		See if SelfLoader works under taint
+dist/signatures/signatures.pm		signatures module
+dist/signatures/signatures.xs		signatures module
+dist/signatures/t/01basic.t		Tests basic usage
+dist/signatures/t/02anon.t		Tests anonymous subs
+dist/signatures/t/03eval.t		Tests signatures in eval
+dist/signatures/t/04proto.t		Tests prototype attribute with signatures
+dist/signatures/t/05warnings.t		Tests warnings with signatures
+dist/signatures/t/06weird.t		Tests unusual syntax
+dist/signatures/t/10utf8.t		Tests UTF8 handling in signatures
 dist/Storable/ChangeLog			Storable extension
 dist/Storable/hints/gnukfreebsd.pl	Hint for Storable for named architecture
 dist/Storable/hints/gnuknetbsd.pl	Hint for Storable for named architecture

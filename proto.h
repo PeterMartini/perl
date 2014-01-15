@@ -1238,6 +1238,7 @@ PERL_CALLCONV PPADDR_t*	Perl_get_ppaddr(pTHX)
 			__attribute__pure__;
 
 PERL_CALLCONV REGEXP *	Perl_get_re_arg(pTHX_ SV *sv);
+PERL_CALLCONV CV *	Perl_get_signature_parser(pTHX);
 PERL_CALLCONV SV*	Perl_get_sv(pTHX_ const char *name, I32 flags)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_GET_SV	\

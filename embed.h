@@ -1118,6 +1118,7 @@
 #define get_hash_seed(a)	Perl_get_hash_seed(aTHX_ a)
 #define get_no_modify()		Perl_get_no_modify(aTHX)
 #define get_opargs()		Perl_get_opargs(aTHX)
+#define get_signature_parser()	Perl_get_signature_parser(aTHX)
 #define gv_override(a,b)	Perl_gv_override(aTHX_ a,b)
 #define gv_try_downgrade(a)	Perl_gv_try_downgrade(aTHX_ a)
 #define hv_ename_add(a,b,c,d)	Perl_hv_ename_add(aTHX_ a,b,c,d)

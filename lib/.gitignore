@@ -223,6 +223,7 @@
 /perlxstut.pod
 /perlxstypemap.pod
 /re.pm
+/signatures.pm
 /threads.pm
 /threads/
 /version.pm

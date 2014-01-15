@@ -695,7 +695,26 @@ subname	:	WORD
 /* Subroutine prototype */
 proto	:	/* NULL */
 			{ $$ = (OP*)NULL; }
-	|	THING
+	|	THING   {
+			  CV * cv = get_signature_parser();
+			  if (cv) {
+			      dSP;
+			      /* No ENTER - We're explicitly keeping the same scope */
+			      SAVETMPS;
+			      PUSHMARK(sp);
+			      XPUSHs((SV*)$$);
+			      PUTBACK;
+			      call_sv(MUTABLE_SV(cv), G_SCALAR);
+			      SPAGAIN;
+			      $$ = (OP*)POPs;
+			      PUTBACK;
+			      FREETMPS;
+			      /* No LEAVE - We're explicitly keeping the same scope */
+			      /* Mark any new lexicals as active.  This has to
+			         be done here since intro_my is not exported */
+			      intro_my();
+			  }
+			}
 	;
 
 /* Optional list of subroutine attributes */

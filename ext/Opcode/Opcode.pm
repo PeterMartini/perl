@@ -6,7 +6,7 @@ use strict;
 
 our($VERSION, @ISA, @EXPORT_OK);
 
-$VERSION = "1.27";
+$VERSION = "1.28";
 
 use Carp;
 use Exporter ();
@@ -430,6 +430,8 @@ These are a hotchpotch of opcodes still waiting to be considered
     smartmatch
 
     custom -- where should this go
+
+    subinit
 
 =item :base_math
 

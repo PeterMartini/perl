@@ -4927,6 +4927,13 @@ superfluous.
 (W signal) The signal handler named in %SIG doesn't, in fact, exist.
 Perhaps you put it into the wrong package?
 
+=item signature_parser plugin requires a sub ref
+
+(P) The L<signatures> module uses a plugin architecture to enable / disable
+signature parsing.  This error indicates an error in those internals, which
+means there is either a bug in the L<signatures> module, or another module
+is improperly using those hooks.
+
 =item Slab leaked from cv %p
 
 (S) If you see this message, then something is seriously wrong with the

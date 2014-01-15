@@ -8782,7 +8782,8 @@ Perl_yylex(pTHX)
 		    COPLINE_SET_FROM_MULTI_END;
 		    if (!s)
 			Perl_croak(aTHX_ "Prototype not terminated");
-		    (void)validate_proto(PL_subname, PL_lex_stuff, ckWARN(WARN_ILLEGALPROTO));
+		    if (!get_signature_parser())
+			(void)validate_proto(PL_subname, PL_lex_stuff, ckWARN(WARN_ILLEGALPROTO));
 		    have_proto = TRUE;
 
 #ifdef PERL_MAD
@@ -12382,6 +12383,43 @@ Perl_parse_stmtseq(pTHX_ U32 flags)
     if (c != -1 && c != /*{*/'}')
 	qerror(Perl_mess(aTHX_ "Parse error"));
     return stmtseqop;
+}
+
+/*
+=for apidoc p|CV *|get_signature_parser
+
+B<NOTE: This is all implementation detail and subject to change.>
+
+In order to enable named formal parameters, the L<signatures> module
+loads a sub into the hints hash under the C<signatures_parser> key.
+That sub takes a pointer to an OP and must return either an OP_CONST, which
+will be used as a prototype, or an OP_SUBINIT which will be the first OP
+run in the new sub every time it is called.
+
+The C<signature_parser> runs after the new sub's environment (PAD,
+C<PL_compcv>, etc) have been set up, but before any code is parsed; that
+also means that there may not be any body in the sub at all.
+
+C<get_signature_parser> returns a C<CV *> if the signature parser is
+currently enabled or C<NULL> if it is not enabled.
+
+=cut
+*/
+
+CV *
+Perl_get_signature_parser(pTHX)
+{
+    SV **svp = hv_fetchs(GvHV(PL_hintgv), "signature_parser", FALSE);
+    if (svp) {
+        SV *rv = *svp;
+        CV * cv = SvROK(rv) ? (CV*)SvRV(rv) : NULL;
+        if (cv && SvTYPE(cv) == SVt_PVCV)
+            return cv;
+        else
+            Perl_croak(aTHX_ "signature_parser plugin requires a sub ref");
+    }
+    else
+        return NULL;
 }
 
 /*
