@@ -7324,6 +7324,21 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 			[CvDEPTH(outcv) ? CvDEPTH(outcv) : 1])[pax];
     spot = (CV **)svspot;
 
+    /* If the prototype is actually a signature (named formal parameter),
+       process it */
+    if (proto && proto->op_type == OP_SUBINIT) {
+        if (block) {
+            proto->op_sibling = block;
+            block = proto;
+        }
+        else {
+            /* FIXME: The signature will be discarded if there's no code;
+               this could be changed to be remembered and compared against */
+            op_free(proto);
+        }
+        proto = NULL;
+    }
+
     if (!(PL_parser && PL_parser->error_count))
         move_proto_attr(&proto, &attrs, (GV *)name);
 
