@@ -7688,12 +7688,6 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
        process it */
     if (proto && proto->op_type == OP_SUBINIT) {
         if (block) {
-/*
-            UNOP * op = newSVOP(OP_CUSTOM, 0, newSVpvs("sig"));
-            op->op_ppaddr = &Perl_pp_null;
-            op->op_sibling = block;
-            block = op;
-*/
             proto->op_sibling = block;
             block = proto;
         }
