@@ -8778,11 +8778,13 @@ Perl_yylex(pTHX)
 
 		/* Look for a prototype */
 		if (*s == '(') {
+                    SV * sigsv = cop_hints_fetch_pvs(PL_curcop, "signature_v", 0);
 		    s = scan_str(s,!!PL_madskills,FALSE,FALSE,FALSE,NULL);
 		    COPLINE_SET_FROM_MULTI_END;
 		    if (!s)
 			Perl_croak(aTHX_ "Prototype not terminated");
-		    (void)validate_proto(PL_subname, PL_lex_stuff, ckWARN(WARN_ILLEGALPROTO));
+		    if (!(sigsv && SvIOK(sigsv) && SvIVX(sigsv) == 520))
+			(void)validate_proto(PL_subname, PL_lex_stuff, ckWARN(WARN_ILLEGALPROTO));
 		    have_proto = TRUE;
 
 #ifdef PERL_MAD
@@ -12382,6 +12384,153 @@ Perl_parse_stmtseq(pTHX_ U32 flags)
     if (c != -1 && c != /*{*/'}')
 	qerror(Perl_mess(aTHX_ "Parse error"));
     return stmtseqop;
+}
+
+STATIC OP *
+S_signatures_initsub(pTHX)
+{
+    AV * args = GvAV(PL_defgv);
+    SV ** argsa = AvARRAY(args);
+    int argc = av_len(args) + 1;
+    int padc = SvIVX(cSVOPx_sv(PL_op));
+    const int lasttype = SvTYPE(PAD_SVl(padc));
+    const bool dogreedy = (argc >= padc && lasttype >= SVt_PVAV) ? TRUE : FALSE;
+    int lastix = argc < padc ? argc : (dogreedy ? padc - 1 : padc);
+    int i;
+
+    /* Set up the savestack to clear the range */
+    const UV payload = (UV)(
+                            (1 << (OPpPADRANGE_COUNTSHIFT + SAVE_TIGHT_SHIFT))
+                          | (padc << SAVE_TIGHT_SHIFT)
+                          | SAVEt_CLEARPADRANGE);
+
+    dSS_ADD;
+    SS_ADD_UV(payload);
+    SS_ADD_END(1);
+
+    /* TODO: Optional warning if there are unslurped args,
+       controlled by callee, not caller */
+
+    /* Set all the simple scalars */
+    for (i = 0; i < lastix; i++) {
+        SV * sv = PAD_SVl(i + 1);
+        sv_setsv(sv, argsa[i]);
+        SvPADSTALE_off(sv);
+    }
+
+    /* Clear the stale flag on anything not initialized; we're considering it
+       implicitly initialized to undef */
+    for (i = lastix; i < padc; i++)
+        SvPADSTALE_off(PAD_SVl(i + 1));
+
+    /* Set the last, if it takes an array or hash and there's something to fill it */
+    if (dogreedy) {
+        SV * sv = PAD_SVl(padc);
+        assert(lasttype == SVt_PVAV || lasttype == SVt_PVHV);
+        SvPADSTALE_off(sv);
+        if (lasttype == SVt_PVAV) {
+            SV ** ary;
+            AV * const av = MUTABLE_AV(sv);
+            av_extend(av, argc - padc);
+            AvMAX(av) = argc - padc;
+            AvFILLp(av) = argc - padc;
+            ary = AvARRAY(av);
+            while (argc-- > lastix)
+                ary[argc-lastix] = newSVsv(argsa[argc]);
+        } else {
+            HV * const hv = MUTABLE_HV(sv);
+            if ((argc - padc) % 2 == 0)
+                (void)hv_store_ent(hv, argsa[--argc], newSV(0), 0);
+            while (argc > padc) {
+                SV * const val = newSVsv(argsa[--argc]);
+                (void)hv_store_ent(hv, argsa[--argc], val, 0);
+            }
+        }
+    }
+
+    return NORMAL;
+}
+
+OP *
+Perl_parse_signature(SV * proto)
+{
+    SV * newsv;
+    SVOP * op;
+    AV * list = (AV*)sv_2mortal((SV*)newAV());
+    char * ptr;
+    const char * end = SvEND(proto);
+    int i;
+    bool last_was_greedy = FALSE;
+    const bool is_utf8 = cBOOL(SvUTF8(proto));
+    char tmpbuf[sizeof PL_tokenbuf * 4];
+    char * d = tmpbuf;
+    char * bufend = tmpbuf + sizeof tmpbuf - 1;
+
+    /* Check if there are any word characters.  If there *aren't*,
+       this is a prototype.  */
+    ptr = SvPV_nolen(proto);
+    while (ptr < end) {
+        if (isALNUM_lazy_if(ptr, is_utf8))
+            break;
+        else
+            ptr += is_utf8 ? UTF8SKIP(ptr) : 1;
+    }
+    if (ptr >= end) {
+        /* Validate in perly.y */
+        (void)Perl_validate_proto(aTHX_ PL_subname, proto, ckWARN(WARN_ILLEGALPROTO));
+        return NULL;
+    }
+
+    /* Handle the signature */
+    ptr = SvPV_nomg_nolen(proto);
+    do {
+        char * start = NULL;
+        while (isSPACE(*ptr)) ptr++;
+        if (isSPACE(*ptr)) ptr = PEEKSPACE(ptr);
+        start = ptr;
+        if (*ptr == ',')
+            croak("Missing variable name in parameter list (consecutive commas)");
+        if (!strchr("$@%",*ptr++)) {
+            croak("Bad name in signature, starting at '%s'", start);
+        }
+        if (*start != '$') {
+            if (last_was_greedy)
+                croak("Only the last parameter can be greedy (a hash or an array)");
+            else
+                last_was_greedy = TRUE;
+        }
+        if (isIDFIRST_lazy_if(ptr, is_utf8)) {
+            SV * varname;
+            parse_ident(&ptr, &d, bufend, 1, is_utf8);
+            varname = newSVpvn_flags(start, (ptr-start), SvUTF8(proto));
+            for (i = 0; i <= AvFILLp(list); i++) {
+                if (sv_cmp_flags(varname, AvARRAY(list)[i], 0) == 0)
+                    croak("%s was declared twice in the same signature", SvPVX(varname));
+            }
+            av_push(list, varname);
+        } else {
+            croak("Bad name in signature, starting at '%s'", start);
+        }
+        while (isSPACE(*ptr)) ptr++;
+        if (*ptr != ',' && *ptr != '\0')
+            croak("Only variable names, commas, and spaces are legal in signatures");
+    } while (++ptr < end);
+
+    for (i = 0; i <= AvFILLp(list); i++) {
+        SV * varname = AvARRAY(list)[i];
+        const int pad_ix = pad_add_name_sv(varname, 0, NULL, NULL);
+        switch (*SvPVX(varname)) {
+            case '%': sv_upgrade(PAD_SVl(pad_ix), SVt_PVHV); break;
+            case '@': sv_upgrade(PAD_SVl(pad_ix), SVt_PVAV); break;
+            default: break;
+        }
+    }
+    intro_my();
+    newsv = newSVsv(proto);
+    SvIV_set(newsv, AvFILLp(list) + 1);
+    op = (SVOP*)newSVOP(OP_SUBINIT, 0, newsv);
+    op->op_ppaddr = S_signatures_initsub;
+    return (OP*)op;
 }
 
 /*

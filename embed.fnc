@@ -733,6 +733,8 @@ AMpd	|OP*	|parse_barestmt	|U32 flags
 AMpd	|SV*	|parse_label	|U32 flags
 AMpd	|OP*	|parse_fullstmt	|U32 flags
 AMpd	|OP*	|parse_stmtseq	|U32 flags
+: Private function for signatures
+p	|OP*	|parse_signature|NN SV* sv
 : Used in various files
 Ap	|void	|op_null	|NN OP* o
 : FIXME. Used by Data::Alias

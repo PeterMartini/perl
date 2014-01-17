@@ -695,7 +695,16 @@ subname	:	WORD
 /* Subroutine prototype */
 proto	:	/* NULL */
 			{ $$ = (OP*)NULL; }
-	|	THING
+	|	THING   {
+			  const SV * const sv = cop_hints_fetch_pvs(PL_curcop, "signature_v", 0);
+			  if (sv && SvIOK(sv) && SvIVX(sv) == 520) {
+			      OP * op = parse_signature(cSVOPx_sv($$));
+			      if (op) {
+				  op_free($$);
+				  $$ = op;
+			      }
+			  }
+			}
 	;
 
 /* Optional list of subroutine attributes */

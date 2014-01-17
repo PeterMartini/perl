@@ -7324,6 +7324,16 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 			[CvDEPTH(outcv) ? CvDEPTH(outcv) : 1])[pax];
     spot = (CV **)svspot;
 
+    if (proto && proto->op_type == OP_SUBINIT) {
+        if (block) {
+            proto->op_sibling = block;
+            block = proto;
+        } else {
+            op_free(proto);
+        }
+        proto = NULL;
+    }
+
     if (!(PL_parser && PL_parser->error_count))
         move_proto_attr(&proto, &attrs, (GV *)name);
 
@@ -7682,6 +7692,16 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
     } else {
 	gv = gv_fetchpvs("__ANON__::__ANON__", gv_fetch_flags, SVt_PVCV);
 	has_name = FALSE;
+    }
+
+    if (proto && proto->op_type == OP_SUBINIT) {
+        if (block) {
+            proto->op_sibling = block;
+            block = proto;
+        } else {
+            op_free(proto);
+        }
+        proto = NULL;
     }
 
     if (!ec)

@@ -3179,6 +3179,11 @@ PERL_CALLCONV OP*	Perl_parse_fullexpr(pTHX_ U32 flags);
 PERL_CALLCONV OP*	Perl_parse_fullstmt(pTHX_ U32 flags);
 PERL_CALLCONV SV*	Perl_parse_label(pTHX_ U32 flags);
 PERL_CALLCONV OP*	Perl_parse_listexpr(pTHX_ U32 flags);
+PERL_CALLCONV OP*	Perl_parse_signature(pTHX_ SV* sv)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_PARSE_SIGNATURE	\
+	assert(sv)
+
 PERL_CALLCONV OP*	Perl_parse_stmtseq(pTHX_ U32 flags);
 PERL_CALLCONV OP*	Perl_parse_termexpr(pTHX_ U32 flags);
 PERL_CALLCONV U32	Perl_parse_unicode_opts(pTHX_ const char **popt)
