@@ -12466,6 +12466,8 @@ Perl_parse_signature(SV * proto)
     char * d = tmpbuf;
     char * bufend = tmpbuf + sizeof tmpbuf - 1;
 
+    PERL_ARGS_ASSERT_PARSE_SIGNATURE;
+
     /* Check if there are any word characters.  If there *aren't*,
        this is a prototype.  */
     ptr = SvPV_nolen(proto);

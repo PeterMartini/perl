@@ -4192,6 +4192,7 @@ lib/Pod/t/Usage.t		See if Pod::Usage works
 lib/Pod/t/utils.t		Test for Pod::ParseUtils
 lib/SelectSaver.pm		Enforce proper select scoping
 lib/SelectSaver.t		See if SelectSaver works
+lib/signatures.pm		Enable signature parsing
 lib/sigtrap.pm			For trapping an abort and giving traceback
 lib/sigtrap.t			See if sigtrap works
 lib/sort.pm			For "use sort"
