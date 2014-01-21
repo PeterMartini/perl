@@ -991,26 +991,30 @@ sub indent {
 sub deparse_sub {
     my $self = shift;
     my $cv = shift;
+    my $root = $cv->ROOT;
     my $proto = "";
+    my @attrs;
 Carp::confess("NULL in deparse_sub") if !defined($cv) || $cv->isa("B::NULL");
 Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
     local $self->{'curcop'} = $self->{'curcop'};
-    if ($cv->FLAGS & SVf_POK) {
+    if ((not null $root) && ($root->first->name eq "subinit")){
+        $proto = "(" . $root->first->sv->PV . ") ";
+        if ($cv->FLAGS & SVf_POK) {
+            push @attrs, "prototype(" . $cv->PV . ")";
+        }
+    } elsif ($cv->FLAGS & SVf_POK) {
 	$proto = "(". $cv->PV . ") ";
     }
-    if ($cv->CvFLAGS & (CVf_METHOD|CVf_LOCKED|CVf_LVALUE)) {
-        $proto .= ": ";
-        $proto .= "lvalue " if $cv->CvFLAGS & CVf_LVALUE;
-        $proto .= "locked " if $cv->CvFLAGS & CVf_LOCKED;
-        $proto .= "method " if $cv->CvFLAGS & CVf_METHOD;
-    }
+    push @attrs, "lvalue" if $cv->CvFLAGS & CVf_LVALUE;
+    push @attrs, "locked" if $cv->CvFLAGS & CVf_LOCKED;
+    push @attrs, "method" if $cv->CvFLAGS & CVf_METHOD;
+    $proto .= ": " . join (" ", @attrs) . " " if @attrs > 0;
 
     local($self->{'curcv'}) = $cv;
     local($self->{'curcvlex'});
     local(@$self{qw'curstash warnings hints hinthash'})
 		= @$self{qw'curstash warnings hints hinthash'};
     my $body;
-    my $root = $cv->ROOT;
     local $B::overlay = {};
     if (not null $root) {
 	$self->pessimise($root, $cv->START);
@@ -4942,6 +4946,14 @@ sub pp_padcv {
     my $self = shift;
     my($op, $cx) = @_;
     return $self->padany($op);
+}
+
+sub pp_subinit {
+    my ($self, $root, $cx, @ops) = @_;
+    if (defined $root) {
+        return $self->deparse($root->sibling, 0);
+    }
+    return "<UNKNOWN>";
 }
 
 1;
