@@ -1258,7 +1258,7 @@ STMT_START {                               \
     STRLEN skiplen;                                                                 \
     U8 flags = FOLD_FLAGS_FULL; \
     switch (trie_type) {                                                            \
-    case trie_utf8_exactfa_fold:                                                            \
+    case trie_utf8_exactfa_fold:                                                    \
         flags |= FOLD_FLAGS_NOMIX_ASCII; \
         /* FALL THROUGH */ \
     case trie_utf8_fold:                                                            \
@@ -1268,7 +1268,7 @@ STMT_START {                               \
             uscan += len;                                                           \
             len=0;                                                                  \
         } else {                                                                    \
-            uvc = _to_utf8_fold_flags( (const U8*) uc, foldbuf, &foldlen, flags, NULL);                \
+            uvc = _to_utf8_fold_flags( (const U8*) uc, foldbuf, &foldlen, flags);   \
             len = UTF8SKIP(uc);                                                     \
             skiplen = UNISKIP( uvc );                                               \
             foldlen -= skiplen;                                                     \
@@ -1286,7 +1286,7 @@ STMT_START {                               \
             len=0;                                                                  \
         } else {                                                                    \
             len = 1;                                                                \
-            uvc = _to_fold_latin1( (U8) *uc, foldbuf, &foldlen, flags);   \
+            uvc = _to_fold_latin1( (U8) *uc, foldbuf, &foldlen, flags);             \
             skiplen = UNISKIP( uvc );                                               \
             foldlen -= skiplen;                                                     \
             uscan = foldbuf + skiplen;                                              \

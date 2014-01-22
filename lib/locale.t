@@ -1883,7 +1883,7 @@ setlocale(&POSIX::LC_ALL, "C");
         # (the \x{149} is one of these, but changes into 2 characters, the
         #   first one of which doesn't cross the boundary.
         # the final one in each list is an above-Latin1 character whose case
-        #   does change, and shouldn't be tainted.  The code below uses its
+        #   does change; it also shouldn't be tainted.  The code below uses its
         #   position in its list as a marker to indicate that it, unlike the
         #   other code points above ASCII, has a successful case change
         if ($function =~ /^u/) {
@@ -1959,9 +1959,9 @@ setlocale(&POSIX::LC_ALL, "C");
                             : "; not encoded in utf8)")
                         . " should be \"$should_be\", got \"$changed\"");
 
-                    # Tainting shouldn't happen for utf8 locales, empty
-                    # strings, or those characters above 255.
-                    (! $is_utf8_locale && length($char) > 0 && ord($char) < 256)
+                    # Tainting shouldn't happen for use locale :not_character
+                    # (a utf8 locale)
+                    (! $is_utf8_locale)
                     ? check_taint($changed)
                     : check_taint_not($changed);
 
