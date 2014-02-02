@@ -243,6 +243,7 @@ PERL_CALLCONV OP *Perl_pp_stat(pTHX);
 PERL_CALLCONV OP *Perl_pp_stringify(pTHX);
 PERL_CALLCONV OP *Perl_pp_stub(pTHX);
 PERL_CALLCONV OP *Perl_pp_study(pTHX);
+PERL_CALLCONV OP *Perl_pp_subinit(pTHX);
 PERL_CALLCONV OP *Perl_pp_subst(pTHX);
 PERL_CALLCONV OP *Perl_pp_substcont(pTHX);
 PERL_CALLCONV OP *Perl_pp_substr(pTHX);

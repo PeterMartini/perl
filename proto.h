@@ -2694,6 +2694,7 @@ PERL_CALLCONV int	Perl_my_vsnprintf(char *buffer, const Size_t len, const char *
 	assert(buffer); assert(format)
 
 PERL_CALLCONV OP*	Perl_newANONATTRSUB(pTHX_ I32 floor, OP *proto, OP *attrs, OP *block);
+PERL_CALLCONV OP*	Perl_newANONATTRSUB_x(pTHX_ I32 floor, OP *proto, OP *sig, OP *attrs, OP *block);
 PERL_CALLCONV OP*	Perl_newANONHASH(pTHX_ OP* o)
 			__attribute__malloc__
 			__attribute__warn_unused_result__;
@@ -2708,7 +2709,7 @@ PERL_CALLCONV OP*	Perl_newASSIGNOP(pTHX_ I32 flags, OP* left, I32 optype, OP* ri
 			__attribute__warn_unused_result__;
 
 /* PERL_CALLCONV CV*	newATTRSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block); */
-PERL_CALLCONV CV*	Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block, bool o_is_gv);
+PERL_CALLCONV CV*	Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *sig, OP *attrs, OP *block, bool o_is_gv);
 /* PERL_CALLCONV AV*	Perl_newAV(pTHX)
 			__attribute__warn_unused_result__; */
 
@@ -2823,6 +2824,11 @@ PERL_CALLCONV CV *	Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, O
 #define PERL_ARGS_ASSERT_NEWMYSUB	\
 	assert(o)
 
+PERL_CALLCONV CV *	Perl_newMYSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *sig, OP *attrs, OP *block)
+			__attribute__nonnull__(pTHX_2);
+#define PERL_ARGS_ASSERT_NEWMYSUB_X	\
+	assert(o)
+
 PERL_CALLCONV OP*	Perl_newNULLLIST(pTHX)
 			__attribute__malloc__
 			__attribute__warn_unused_result__;
@@ -2880,6 +2886,7 @@ PERL_CALLCONV CV*	Perl_newSTUB(pTHX_ GV *gv, bool fake)
 	assert(gv)
 
 /* PERL_CALLCONV CV*	Perl_newSUB(pTHX_ I32 floor, OP* o, OP* proto, OP* block); */
+PERL_CALLCONV OP*	Perl_newSUBINIT(pTHX_ OP* o);
 PERL_CALLCONV SV*	Perl_newSV(pTHX_ const STRLEN len)
 			__attribute__malloc__
 			__attribute__warn_unused_result__;

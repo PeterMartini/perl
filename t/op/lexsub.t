@@ -684,7 +684,7 @@ like runperl(
     'deep recursion warnings for lexical subs do not crash';
 
 like runperl(
-      switches => [ '-Mfeature=:all', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
+      switches => [ '-Mfeature=lexical_subs', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
       prog     => 'my sub foo() { 42 } undef &foo',
       stderr   => 1
      ),

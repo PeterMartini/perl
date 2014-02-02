@@ -7303,6 +7303,12 @@ S_already_defined(pTHX_ CV *const cv, OP * const block, OP * const o,
 CV *
 Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 {
+    return Perl_newMYSUB_x(floor, o, proto, NULL, attrs, block);
+}
+
+CV *
+Perl_newMYSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP * signature, OP *attrs, OP *block)
+{
     dVAR;
     CV **spot;
     SV **svspot;
@@ -7569,7 +7575,16 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
        itself has a refcount. */
     CvSLABBED_off(cv);
     OpslabREFCNT_dec_padok((OPSLAB *)CvSTART(cv));
-    CvSTART(cv) = LINKLIST(CvROOT(cv));
+    if (signature) {
+        LINKLIST(signature);
+        if (cLISTOPx(signature)->op_last)
+            cLISTOPx(signature)->op_last->op_next = LINKLIST(CvROOT(cv));
+        else
+            signature->op_next = LINKLIST(CvROOT(cv));
+        CvSTART(cv) = signature;
+    }
+    else
+        CvSTART(cv) = LINKLIST(CvROOT(cv));
     CvROOT(cv)->op_next = 0;
     CALL_PEEP(CvSTART(cv));
     finalize_optree(CvROOT(cv));
@@ -7649,7 +7664,7 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 
 /* _x = extended */
 CV *
-Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
+Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *signature, OP *attrs,
 			    OP *block, bool o_is_gv)
 {
     dVAR;
@@ -7924,7 +7939,16 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
 #ifdef PERL_DEBUG_READONLY_OPS
     slab = (OPSLAB *)CvSTART(cv);
 #endif
-    CvSTART(cv) = LINKLIST(CvROOT(cv));
+    if (signature) {
+        LINKLIST(signature);
+        if (cLISTOPx(signature)->op_last)
+            cLISTOPx(signature)->op_last->op_next = LINKLIST(CvROOT(cv));
+        else
+            signature->op_next = LINKLIST(CvROOT(cv));
+        CvSTART(cv) = signature;
+    }
+    else
+        CvSTART(cv) = LINKLIST(CvROOT(cv));
     CvROOT(cv)->op_next = 0;
     CALL_PEEP(CvSTART(cv));
     finalize_optree(CvROOT(cv));
@@ -8366,6 +8390,14 @@ Perl_newANONATTRSUB(pTHX_ I32 floor, OP *proto, OP *attrs, OP *block)
     return newUNOP(OP_REFGEN, 0,
 	newSVOP(OP_ANONCODE, 0,
 		MUTABLE_SV(newATTRSUB(floor, 0, proto, attrs, block))));
+}
+
+OP *
+Perl_newANONATTRSUB_x(pTHX_ I32 floor, OP *proto, OP * signature, OP *attrs, OP *block)
+{
+    return newUNOP(OP_REFGEN, 0,
+	newSVOP(OP_ANONCODE, 0,
+		MUTABLE_SV(newATTRSUB_x(floor, 0, proto, signature, attrs, block, FALSE))));
 }
 
 OP *
@@ -12383,6 +12415,91 @@ const_av_xsub(pTHX_ CV* cv)
     EXTEND(SP, AvFILLp(av)+1);
     Copy(AvARRAY(av), &ST(0), AvFILLp(av)+1, SV *);
     XSRETURN(AvFILLp(av)+1);
+}
+
+STATIC void
+S_fixup_sigelem(pTHX_ OP* o)
+{
+    switch (o->op_type) {
+        case OP_SASSIGN:
+            if (cBINOPo->op_first->op_type != OP_UNDEF)
+                croak("Only undef is legal as a default for signatures");
+            break;
+        case OP_AASSIGN:
+            if (cBINOPo->op_first->op_type == OP_LIST &&
+                cBINOPo->op_first->op_sibling->op_type == OP_UNDEF &&
+                cBINOPo->op_first->op_sibling->op_sibling == OP_NULL)
+                croak("Only undef is legal as a default for signatures");
+            break;
+        case OP_PADSV:
+        case OP_PADAV:
+        case OP_PADHV:
+            break;
+        default:
+            croak("Unexpected %s while parsing signature", OP_DESC(o));
+    }
+}
+
+OP *
+Perl_newSUBINIT(pTHX_ OP* o)
+{
+    if (!o)
+        o = newLISTOP(OP_SUBINIT, 0, NULL, NULL);
+    else {
+        switch (o->op_type) {
+        /* Single parameter, with or without defaults */
+        case OP_SASSIGN:
+        case OP_AASSIGN:
+        case OP_PADSV:
+        case OP_PADAV:
+        case OP_PADHV:
+            S_fixup_sigelem(o);
+
+            o = newLISTOP(OP_SUBINIT, 0, o, NULL);
+            break;
+        /* Multiple parameters */
+        case OP_SUBINIT:
+            {
+                bool last_had_default = FALSE, last_was_greedy = FALSE;
+                OP * sib = cLISTOPo->op_first;
+                while (sib) {
+                    const OP * const padop = (
+                        (sib->op_flags & OPf_KIDS)
+                        ? cBINOPx(sib)->op_last
+                        : (sib->op_type == OP_UNDEF ? NULL : sib));
+
+                    S_fixup_sigelem(sib);
+
+                    if (padop) {
+                        PADOFFSET i = 1;
+                        SV * name = PAD_COMPNAME_SV(padop->op_targ);
+                        for (i = 1; i < padop->op_targ; i++)
+                            if (sv_cmp(name, PAD_COMPNAME_SV(i)) == 0)
+                                Perl_croak(aTHX_ "Duplicate name in signature for %"SVf": %"SVf,
+                                    SVfARG(PL_subname), SVfARG(name));
+
+                        if (SvTYPE(PAD_SVl(padop->op_targ)) >= SVt_PVAV)
+                            last_was_greedy = TRUE;
+                        else if (last_was_greedy)
+                            Perl_croak(aTHX_ "Illegal parameter in signature for %"SVf": "
+                                             "only the last parameter can be an array or hash",
+                                              SVfARG(PL_subname));
+                    }
+
+                    if (sib->op_type == OP_SASSIGN || sib->op_type == OP_AASSIGN)
+                        last_had_default = TRUE;
+                    else if (last_had_default)
+                        croak("Parameters without defaults must come first");
+
+                    sib = sib->op_sibling;
+                }
+            }
+            break;
+        default:
+            croak("Unexpected %s while parsing signature", OP_DESC(o));
+        }
+    }
+    return CHECKOP(OP_SUBINIT, o);
 }
 
 /*

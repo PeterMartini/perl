@@ -5,11 +5,11 @@
  */
 
 #ifdef PERL_CORE
-/* A Bison parser, made by GNU Bison 2.7.12-4996.  */
+/* A Bison parser, made by GNU Bison 2.5.  */
 
 /* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,13 +37,6 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -109,29 +102,30 @@ extern int yydebug;
      COLONATTR = 313,
      FORMLBRACK = 314,
      FORMRBRACK = 315,
-     PREC_LOW = 316,
-     DOROP = 317,
-     OROP = 318,
-     ANDOP = 319,
-     NOTOP = 320,
-     ASSIGNOP = 321,
-     DORDOR = 322,
-     OROR = 323,
-     ANDAND = 324,
-     BITOROP = 325,
-     BITANDOP = 326,
-     SHIFTOP = 327,
-     MATCHOP = 328,
-     REFGEN = 329,
-     UMINUS = 330,
-     POWOP = 331,
-     POSTJOIN = 332,
-     POSTDEC = 333,
-     POSTINC = 334,
-     PREDEC = 335,
-     PREINC = 336,
-     ARROW = 337,
-     PEG = 338
+     SIGNATURE = 316,
+     PREC_LOW = 317,
+     DOROP = 318,
+     OROP = 319,
+     ANDOP = 320,
+     NOTOP = 321,
+     ASSIGNOP = 322,
+     DORDOR = 323,
+     OROR = 324,
+     ANDAND = 325,
+     BITOROP = 326,
+     BITANDOP = 327,
+     SHIFTOP = 328,
+     MATCHOP = 329,
+     REFGEN = 330,
+     UMINUS = 331,
+     POWOP = 332,
+     POSTJOIN = 333,
+     POSTDEC = 334,
+     POSTINC = 335,
+     PREDEC = 336,
+     PREINC = 337,
+     ARROW = 338,
+     PEG = 339
    };
 #endif
 
@@ -194,29 +188,31 @@ extern int yydebug;
 #define COLONATTR 313
 #define FORMLBRACK 314
 #define FORMRBRACK 315
-#define PREC_LOW 316
-#define DOROP 317
-#define OROP 318
-#define ANDOP 319
-#define NOTOP 320
-#define ASSIGNOP 321
-#define DORDOR 322
-#define OROR 323
-#define ANDAND 324
-#define BITOROP 325
-#define BITANDOP 326
-#define SHIFTOP 327
-#define MATCHOP 328
-#define REFGEN 329
-#define UMINUS 330
-#define POWOP 331
-#define POSTJOIN 332
-#define POSTDEC 333
-#define POSTINC 334
-#define PREDEC 335
-#define PREINC 336
-#define ARROW 337
-#define PEG 338
+#define SIGNATURE 316
+#define PREC_LOW 317
+#define DOROP 318
+#define OROP 319
+#define ANDOP 320
+#define NOTOP 321
+#define ASSIGNOP 322
+#define DORDOR 323
+#define OROR 324
+#define ANDAND 325
+#define BITOROP 326
+#define BITANDOP 327
+#define SHIFTOP 328
+#define MATCHOP 329
+#define REFGEN 330
+#define UMINUS 331
+#define POWOP 332
+#define POSTJOIN 333
+#define POSTDEC 334
+#define POSTINC 335
+#define PREDEC 336
+#define PREINC 337
+#define ARROW 338
+#define PEG 339
+
 
 
 #ifdef PERL_IN_TOKE_C
@@ -245,7 +241,8 @@ S_is_opval_token(int type) {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
-/* Line 2053 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 
     I32	ival; /* __DEFAULT__ (marker for regen_perly.pl;
 				must always be 1st union member) */
@@ -264,7 +261,8 @@ typedef union YYSTYPE
 #endif
 
 
-/* Line 2053 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -272,22 +270,10 @@ typedef union YYSTYPE
 #endif
 
 
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void *YYPARSE_PARAM);
-#else
-int yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void);
-#else
-int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
+
 
 
 /* Generated from:
- * 911fbbcab275e0f9645397ee5b80a7c2384e6b24f793c15e6d6e918ebfd4e384 perly.y
+ * 6cf4e93cf5ca9a332ae49a5d36405ea9402052ca05c2060796b411151ffa6111 perly.y
  * 5c9d2a0262457fe9b70073fc8ad6c188f812f38ad57712b7e2f53daa01b297cc regen_perly.pl
  * ex: set ro: */

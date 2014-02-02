@@ -935,6 +935,7 @@ Apda	|OP*	|newSLICEOP	|I32 flags|NULLOK OP* subscript|NULLOK OP* listop
 Apda	|OP*	|newSTATEOP	|I32 flags|NULLOK char* label|NULLOK OP* o
 Abm	|CV*	|newSUB		|I32 floor|NULLOK OP* o|NULLOK OP* proto \
 				|NULLOK OP* block
+p	|OP*	|newSUBINIT	|NULLOK OP* o
 p	|CV *	|newXS_len_flags|NULLOK const char *name|STRLEN len \
 				|NN XSUBADDR_t subaddr\
 				|NN const char *const filename \
@@ -1716,10 +1717,14 @@ Apd	|SV*	|sv_rvweaken	|NN SV *const sv
 p	|int	|magic_killbackrefs|NN SV *sv|NN MAGIC *mg
 Ap	|OP*	|newANONATTRSUB	|I32 floor|NULLOK OP *proto|NULLOK OP *attrs|NULLOK OP *block
 Am	|CV*	|newATTRSUB	|I32 floor|NULLOK OP *o|NULLOK OP *proto|NULLOK OP *attrs|NULLOK OP *block
-pX	|CV*	|newATTRSUB_x	|I32 floor|NULLOK OP *o|NULLOK OP *proto \
-				 |NULLOK OP *attrs|NULLOK OP *block \
-				 |bool o_is_gv
+pX	|CV*	|newATTRSUB_x	|I32 floor|NULLOK OP *o|NULLOK OP *proto|NULLOK OP *sig \
+				 |NULLOK OP *attrs|NULLOK OP *block|bool o_is_gv
 Ap	|CV *	|newMYSUB	|I32 floor|NN OP *o|NULLOK OP *proto \
+				|NULLOK OP *attrs|NULLOK OP *block
+: These two '_x' routines are to allow the 'sig' attribute, and are not exposed as that
+: attribute is experimental; also, newMYSUB_x may be merged into newATTRSUB_x at some point
+pX	|OP*	|newANONATTRSUB_x	|I32 floor|NULLOK OP *proto|NULLOK OP *sig|NULLOK OP *attrs|NULLOK OP *block
+pX	|CV *	|newMYSUB_x	|I32 floor|NN OP *o|NULLOK OP *proto|NULLOK OP *sig \
 				|NULLOK OP *attrs|NULLOK OP *block
 p	|CV*	|newSTUB	|NN GV *gv|bool fake
 : Used in perly.y

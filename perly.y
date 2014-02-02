@@ -85,7 +85,7 @@
 %token <i_tkval> RELOP EQOP MULOP ADDOP
 %token <i_tkval> DOLSHARP DO HASHBRACK NOAMP
 %token <i_tkval> LOCAL MY REQUIRE
-%token <i_tkval> COLONATTR FORMLBRACK FORMRBRACK
+%token <i_tkval> COLONATTR FORMLBRACK FORMRBRACK SIGNATURE
 
 %type <ival> grammar remember mremember
 %type <ival>  startsub startanonsub startformsub
@@ -101,6 +101,7 @@
 %type <opval> subattrlist myattrlist myattrterm myterm
 %type <opval> termbinop termunop anonymous termdo
 %type <opval> formstmtseq formline formarg
+%type <opval> signature siglist sigelem sigelemvar
 
 %nonassoc <i_tkval> PREC_LOW
 %nonassoc LOOPEX
@@ -339,8 +340,10 @@ barestmt:	PLUGSTMT
 			  PL_parser->in_my = 0;
 			  PL_parser->in_my_stash = NULL;
 			}
-		proto subattrlist subbody
+		proto signature subattrlist subbody
 			{
+			  /* If this has a signature,
+			     the `proto' will be prepended to the body */
 			  SvREFCNT_inc_simple_void(PL_compcv);
 #ifdef MAD
 			  {
@@ -348,8 +351,8 @@ barestmt:	PLUGSTMT
 				(SV*)(
 #endif
 			  $2->op_type == OP_CONST
-			      ? newATTRSUB($3, $2, $5, $6, $7)
-			      : newMYSUB($3, $2, $5, $6, $7)
+			      ? newATTRSUB_x($3, $2, $5, $6, $7, $8, FALSE)
+			      : newMYSUB_x($3, $2, $5, $6, $7, $8)
 #ifdef MAD
 				));
 			      $$ = newOP(OP_NULL,0);
@@ -693,9 +696,51 @@ subname	:	WORD
 	;
 
 /* Subroutine prototype */
-proto	:	/* NULL */
+proto:		/* NULL */
 			{ $$ = (OP*)NULL; }
 	|	THING
+	;
+
+signature:	/* NULL */
+			{ $$ = (OP*)NULL; }
+	|	SIGNATURE { PL_parser->in_my = KEY_my; }
+		'(' siglist ')'
+			{
+			  PL_parser->in_my = 0;
+			  PL_parser->expect = $1;
+			  $$ = newSUBINIT($4);
+			  intro_my();
+			}
+	|	SIGNATURE error
+			{
+			  PL_parser->expect = $1;
+			  $$ = (OP*)NULL;
+			}
+	;
+
+siglist :
+		siglist ',' sigelem
+			{
+			  $$ = op_append_elem(OP_SUBINIT, $1, $3);
+			}
+
+	|	sigelem
+	;
+
+sigelem :	/* NULL */
+			{ $$ = newLISTOP(OP_SUBINIT, 0, NULL, NULL); }
+	|	sigelemvar ASSIGNOP term
+			{
+			  $$ = newASSIGNOP(OPf_STACKED, $1, IVAL($2), $3);
+			}
+	|	sigelemvar
+	|	UNIOP { $$ = newOP(IVAL($1), 0); }
+	;
+
+sigelemvar :
+		'$' PRIVATEREF { $$ = newSVREF($2); }
+	|	'@' PRIVATEREF { $$ = newAVREF($2); }
+	|	'%' PRIVATEREF { $$ = newHVREF($2); }
 	;
 
 /* Optional list of subroutine attributes */
@@ -1101,9 +1146,12 @@ anonymous:	'[' expr ']'
 			  TOKEN_GETMAD($2,$$,';');
 			  TOKEN_GETMAD($3,$$,'}');
 			}
-	|	ANONSUB startanonsub proto subattrlist block	%prec '('
-			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $$ = newANONATTRSUB($2, $3, $4, $5);
+	|	ANONSUB startanonsub proto signature subattrlist block	%prec '('
+			{
+			  /* If this has a signature,
+			     the `proto' will be prepended to the body */
+			  SvREFCNT_inc_simple_void(PL_compcv);
+			  $$ = newANONATTRSUB_x($2, $3, $4, $5, $6);
 			  TOKEN_GETMAD($1,$$,'o');
 			  OP_GETMAD($3,$$,'s');
 			  OP_GETMAD($4,$$,'a');

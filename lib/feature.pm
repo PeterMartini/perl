@@ -15,6 +15,7 @@ our %feature = (
     evalbytes       => 'feature_evalbytes',
     postderef       => 'feature_postderef',
     array_base      => 'feature_arybase',
+    signatures      => 'feature_signatures',
     current_sub     => 'feature___SUB__',
     lexical_subs    => 'feature_lexsubs',
     postderef_qq    => 'feature_postderef_qq',
@@ -26,7 +27,7 @@ our %feature_bundle = (
     "5.10"    => [qw(array_base say state switch)],
     "5.11"    => [qw(array_base say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base current_sub evalbytes fc lexical_subs postderef postderef_qq say state switch unicode_eval unicode_strings)],
+    "all"     => [qw(array_base current_sub evalbytes fc lexical_subs postderef postderef_qq say signatures state switch unicode_eval unicode_strings)],
     "default" => [qw(array_base)],
 );
 
@@ -244,6 +245,29 @@ This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
 and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
 This feature is available from Perl 5.18 onwards.
+
+=head2 The 'signatures' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::signatures";
+
+This enables subs to be declared with a signature, listing the parameters
+that the sub will take.  For example, C<sub foo($bar, $baz){}> will create
+a new sub named `foo', which will require two parameters, the first of
+which will be available inside the sub as `$bar', and the second as `$foo'.
+
+When this feature is in effect, a signature will only be applied if it
+looks like a signature; in particular, if the `signature` is just punctuation,
+it will be assumed to be a prototype and will be parsed that way.  If both
+a prototype and a signature are desired on the same sub, the C<prototype>
+attribute can be used, like so: C<sub foo($fh,@args) : prototype(*@) {}>.
+
+As the previous example suggests, the last parameter can be an array or a
+hash, while a scalar (C<$>) can be listed at any position.
 
 =head1 FEATURE BUNDLES
 

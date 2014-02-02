@@ -54,6 +54,9 @@ typedef signed char yysigned_char;
 /* contains all the parser state tables; auto-generated from perly.y */
 #include "perly.tab"
 
+/* perly.y cares about KEY_my for parser->in_my in signatures */
+#include "keywords.h"
+
 # define YYSIZE_T size_t
 
 #define YYEOF		0

@@ -6029,7 +6029,8 @@ PP(pp_runcv)
 {
     dSP;
     CV *cv;
-    if (PL_op->op_private & OPpOFFBYONE) {
+    if (PL_op->op_private & OPpOFFBYONE)
+    {
 	cv = find_runcv_where(FIND_RUNCV_level_eq, 1, NULL);
     }
     else cv = find_runcv(NULL);
@@ -6037,6 +6038,148 @@ PP(pp_runcv)
     RETURN;
 }
 
+PP(pp_subinit)
+{
+    typedef enum { NO_ERROR, TOO_FEW, TOO_MANY, ODD_HASH } errtype;
+
+    AV * argsav = GvAV(PL_defgv);
+    const int last = av_len(argsav) + 1;
+    SV ** args = AvARRAY(argsav);
+    OP * nextarg = cLISTOPx(PL_op)->op_first;
+    errtype error = NO_ERROR;
+    int pos = 0;
+    OP * retop = NULL;
+
+    if (!nextarg) {
+        if (last == 0)
+            return NORMAL;
+        else {
+            error = TOO_MANY;
+            goto end;
+        }
+    }
+    else
+        retop = cLISTOPx(PL_op)->op_last->op_next;
+
+    /* There are 5 legal op types that can show up here.
+       PADSV is a scalar with no default, so those must come first.
+       SASSIGN is a scalar with a default, so they must come after PADSV
+          but before array or hashes, with or without defaults.
+       PADHV and PADAV are hashes and arrays with no defaults, and AASSIGN
+          could be either; in any of those cases, there can be only one of these,
+          and it must be the last argument.
+    */
+
+    /* Process SVs with no defaults first */
+    while (nextarg && nextarg->op_type == OP_PADSV) {
+        if (pos >= last) {
+            pos--;
+            error = TOO_FEW;
+            goto end;
+        }
+
+        if (nextarg->op_type == OP_PADSV) {
+            SV * sv = PAD_SVl(pos+1);
+            sv_setsv(sv, *args++);
+            SvPADSTALE_off(sv);
+            pos++;
+        }
+        nextarg = nextarg->op_sibling;
+    }
+
+    /* Process SVs with defaults */
+    while (nextarg && nextarg->op_type == OP_SASSIGN) {
+        if (pos < last) {
+            if (nextarg->op_type == OP_SASSIGN) {
+                SV * sv = PAD_SVl(pos+1);
+                sv_setsv(sv, *args++);
+                SvPADSTALE_off(sv);
+                pos++;
+            }
+            nextarg = nextarg->op_sibling;
+        }
+        else {
+            retop = cBINOPx(nextarg)->op_first;
+            goto end;
+        }
+    }
+
+    if (pos < last && !nextarg) {
+        error = TOO_MANY;
+        goto end;
+    }
+
+    /* An array or hash, with or without a default, must be last.
+       Unlike scalars, no default and no argument is fine; it means
+       empty array/hash */
+    if (nextarg) {
+        if (pos == last) {
+            if (nextarg->op_type == OP_AASSIGN) {
+                retop = cBINOPx(nextarg)->op_first;
+                goto end;
+            }
+        } else {
+            const int lasttype = SvTYPE(PAD_SVl(pos+1));
+            switch (lasttype) {
+                case SVt_PVAV:
+                    {
+                        SV ** ary;
+                        int count = last - ++pos;
+                        AV * const av = MUTABLE_AV(PAD_SVl(pos));
+
+                        av_extend(av, count);
+                        AvMAX(av) = count;
+                        AvFILLp(av) = count;
+                        ary = AvARRAY(av);
+                        do {
+                            *ary++ = newSVsv(*args++);
+                        } while (count--);
+                    }
+                    break;
+                case SVt_PVHV:
+                    if ((last - pos) % 2) {
+                        error = ODD_HASH;
+                        goto end;
+                    }
+                    else {
+                        int count = (last - ++pos) / 2;
+                        HV * const hv = MUTABLE_HV(PAD_SVl(pos));
+                        do {
+                            SV * const val = newSVsv(args[1]);
+                            (void)hv_store_ent(hv, args[0], val, 0);
+                            args += 2;
+                        } while (count--);
+                    }
+                    break;
+                default:
+                    croak("internal error: expected an array or hash");
+            }
+        }
+    }
+
+end:
+    /* Set up the save stack */
+    if (pos) {
+        const UV payload = (UV)(
+                                (1 << (OPpPADRANGE_COUNTSHIFT + SAVE_TIGHT_SHIFT))
+                                 | (pos << SAVE_TIGHT_SHIFT)
+                                 | SAVEt_CLEARPADRANGE);
+        dSS_ADD;
+        SS_ADD_UV(payload);
+        SS_ADD_END(1);
+    }
+
+    /* If there was an error, croak here */
+    switch(error) {
+        case NO_ERROR: break;
+        case TOO_FEW: croak("Not enough arguments passed");
+        case TOO_MANY: croak("Too many arguments passed");
+        case ODD_HASH: croak("Can't initialize a hash with an odd number of arguments");
+        default: croak("internal error: unexpected error type (%i)", error);
+    }
+
+    return retop;
+}
 
 /*
  * Local variables:

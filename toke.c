@@ -8680,6 +8680,7 @@ Perl_yylex(pTHX)
 		char * const tmpbuf = PL_tokenbuf + 1;
 		expectation attrful;
 		bool have_name, have_proto;
+		bool use_signatures = FEATURE_SIGNATURES_IS_ENABLED;
 		const int key = tmp;
 #ifndef PERL_MAD
                 SV *format_name = NULL;
@@ -8777,7 +8778,7 @@ Perl_yylex(pTHX)
 		}
 
 		/* Look for a prototype */
-		if (*s == '(') {
+		if (*s == '(' && !use_signatures) {
 		    s = scan_str(s,!!PL_madskills,FALSE,FALSE,FALSE,NULL);
 		    COPLINE_SET_FROM_MULTI_END;
 		    if (!s)
@@ -8801,12 +8802,21 @@ Perl_yylex(pTHX)
 		    s = skipspace(s);
 #endif
 		}
+		/* TODO: Not sure what to do for MAD here */
+		else if (*s == '(') {
+		    Perl_ck_warner_d(aTHX_
+			packWARN(WARN_EXPERIMENTAL__SIGNATURES),
+			"The signatures feature is experimental");
+		    NEXTVAL_NEXTTOKE.ival = attrful;
+		    PL_expect = XTERM;
+		    force_next(SIGNATURE);
+		}
 		else
 		    have_proto = FALSE;
 
 		if (*s == ':' && s[1] != ':')
 		    PL_expect = attrful;
-		else if (*s != '{' && key == KEY_sub) {
+		else if (*s != '{' && key == KEY_sub && !use_signatures) {
 		    if (!have_name)
 			Perl_croak(aTHX_ "Illegal declaration of anonymous subroutine");
 		    else if (*s != ';' && *s != '}')

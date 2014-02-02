@@ -542,7 +542,7 @@ S_maybe_add_coresub(pTHX_ HV * const stash, GV *gv,
            compiling after a syntax error */
 	if ((cv = newATTRSUB_x(
 		   oldsavestack_ix, (OP *)gv,
-	           NULL,NULL,
+	           NULL,NULL,NULL,
 	           coresub_op(
 	             opnum
 	               ? newSVuv((UV)opnum)
