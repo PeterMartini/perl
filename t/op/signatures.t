@@ -10,7 +10,7 @@ use warnings;
 
 BEGIN {
     require 'test.pl';
-    plan( tests => 52 );
+    plan( tests => 54 );
 }
 
 our @warnings;
@@ -174,7 +174,10 @@ diag @warnings;
     like($@, qr/can't be in a package/, "Package variables are illegal");
 
     eval 'sub foo157($bar, undef, $baz) { "$bar $baz"}';
-    like($@, qr/Unexpected undef/, "undef not allowed (right now)");
+    is($@, "", "undef is legal and means skip this param");
+    is(eval 'foo157 1,2,3', "1 3", "... returns successfull");
+    eval 'foo157 1, 2';
+    like($@, qr/Not enough/, "... and enforces arity");
 
     eval 'sub foo160($bar, sin) {}';
     like($@, qr/Unexpected sin/, "Other operators not allowed either");

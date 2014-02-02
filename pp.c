@@ -6071,7 +6071,7 @@ PP(pp_subinit)
     */
 
     /* Process SVs with no defaults first */
-    while (nextarg && nextarg->op_type == OP_PADSV) {
+    while (nextarg && (nextarg->op_type == OP_PADSV || nextarg->op_type == OP_UNDEF)) {
         if (pos >= last) {
             pos--;
             error = TOO_FEW;
@@ -6079,23 +6079,28 @@ PP(pp_subinit)
         }
 
         if (nextarg->op_type == OP_PADSV) {
-            SV * sv = PAD_SVl(pos+1);
+            SV * sv = PAD_SVl(nextarg->op_targ);
+            SAVECLEARSV(PAD_SVl(nextarg->op_targ));
             sv_setsv(sv, *args++);
-            SvPADSTALE_off(sv);
-            pos++;
         }
+        else
+            args++;
+        pos++;
         nextarg = nextarg->op_sibling;
     }
 
     /* Process SVs with defaults */
-    while (nextarg && nextarg->op_type == OP_SASSIGN) {
+    while (nextarg && (nextarg->op_type == OP_SASSIGN || nextarg->op_type == OP_UNDEF)) {
         if (pos < last) {
             if (nextarg->op_type == OP_SASSIGN) {
-                SV * sv = PAD_SVl(pos+1);
+                SV * sv = PAD_SVl(cBINOPx(nextarg)->op_last->op_targ);
+                SAVECLEARSV(PAD_SVl(cBINOPx(nextarg)->op_last->op_targ));
                 sv_setsv(sv, *args++);
-                SvPADSTALE_off(sv);
-                pos++;
+                SAVEFREESV(sv);
             }
+            else
+                args++;
+            pos++;
             nextarg = nextarg->op_sibling;
         }
         else {
@@ -6119,13 +6124,16 @@ PP(pp_subinit)
                 goto end;
             }
         } else {
-            const int lasttype = SvTYPE(PAD_SVl(pos+1));
+            const OP * op = nextarg->op_type == OP_AASSIGN ? cBINOPx(nextarg)->op_last : nextarg;
+            SV * sv = PAD_SVl(op->op_targ);
+            const int lasttype = SvTYPE(sv);
+            SAVECLEARSV(PAD_SVl(op->op_targ));
             switch (lasttype) {
                 case SVt_PVAV:
                     {
                         SV ** ary;
                         int count = last - ++pos;
-                        AV * const av = MUTABLE_AV(PAD_SVl(pos));
+                        AV * const av = MUTABLE_AV(sv);
 
                         av_extend(av, count);
                         AvMAX(av) = count;
@@ -6143,7 +6151,7 @@ PP(pp_subinit)
                     }
                     else {
                         int count = (last - ++pos) / 2;
-                        HV * const hv = MUTABLE_HV(PAD_SVl(pos));
+                        HV * const hv = MUTABLE_HV(sv);
                         do {
                             SV * const val = newSVsv(args[1]);
                             (void)hv_store_ent(hv, args[0], val, 0);
@@ -6158,17 +6166,6 @@ PP(pp_subinit)
     }
 
 end:
-    /* Set up the save stack */
-    if (pos) {
-        const UV payload = (UV)(
-                                (1 << (OPpPADRANGE_COUNTSHIFT + SAVE_TIGHT_SHIFT))
-                                 | (pos << SAVE_TIGHT_SHIFT)
-                                 | SAVEt_CLEARPADRANGE);
-        dSS_ADD;
-        SS_ADD_UV(payload);
-        SS_ADD_END(1);
-    }
-
     /* If there was an error, croak here */
     switch(error) {
         case NO_ERROR: break;

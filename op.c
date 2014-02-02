@@ -12434,6 +12434,7 @@ S_fixup_sigelem(pTHX_ OP* o)
         case OP_PADSV:
         case OP_PADAV:
         case OP_PADHV:
+        case OP_UNDEF:
             break;
         default:
             croak("Unexpected %s while parsing signature", OP_DESC(o));
@@ -12453,6 +12454,7 @@ Perl_newSUBINIT(pTHX_ OP* o)
         case OP_PADSV:
         case OP_PADAV:
         case OP_PADHV:
+        case OP_UNDEF:
             S_fixup_sigelem(o);
 
             o = newLISTOP(OP_SUBINIT, 0, o, NULL);
