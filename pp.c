@@ -6160,7 +6160,7 @@ PP(pp_subinit)
                     }
                     break;
                 default:
-                    croak("internal error: expected an array or hash");
+                    Perl_croak(aTHX_ "internal error: expected an array or hash");
             }
         }
     }
@@ -6169,10 +6169,10 @@ end:
     /* If there was an error, croak here */
     switch(error) {
         case NO_ERROR: break;
-        case TOO_FEW: croak("Not enough arguments passed");
-        case TOO_MANY: croak("Too many arguments passed");
-        case ODD_HASH: croak("Can't initialize a hash with an odd number of arguments");
-        default: croak("internal error: unexpected error type (%i)", error);
+        case TOO_FEW: Perl_croak(aTHX_ "Not enough arguments passed");
+        case TOO_MANY: Perl_croak(aTHX_ "Too many arguments passed");
+        case ODD_HASH: Perl_croak(aTHX_ "Can't initialize a hash with an odd number of arguments");
+        default: Perl_croak(aTHX_ "internal error: unexpected error type (%i)", error);
     }
 
     return retop;

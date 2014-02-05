@@ -7303,7 +7303,7 @@ S_already_defined(pTHX_ CV *const cv, OP * const block, OP * const o,
 CV *
 Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 {
-    return Perl_newMYSUB_x(floor, o, proto, NULL, attrs, block);
+    return Perl_newMYSUB_x(aTHX_ floor, o, proto, NULL, attrs, block);
 }
 
 CV *
@@ -12423,13 +12423,13 @@ S_fixup_sigelem(pTHX_ OP* o)
     switch (o->op_type) {
         case OP_SASSIGN:
             if (cBINOPo->op_first->op_type != OP_UNDEF)
-                croak("Only undef is legal as a default for signatures");
+                Perl_croak(aTHX_ "Only undef is legal as a default for signatures");
             break;
         case OP_AASSIGN:
             if (cBINOPo->op_first->op_type == OP_LIST &&
                 cBINOPo->op_first->op_sibling->op_type == OP_UNDEF &&
                 cBINOPo->op_first->op_sibling->op_sibling == OP_NULL)
-                croak("Only undef is legal as a default for signatures");
+                Perl_croak(aTHX_ "Only undef is legal as a default for signatures");
             break;
         case OP_PADSV:
         case OP_PADAV:
@@ -12437,7 +12437,7 @@ S_fixup_sigelem(pTHX_ OP* o)
         case OP_UNDEF:
             break;
         default:
-            croak("Unexpected %s while parsing signature", OP_DESC(o));
+            Perl_croak(aTHX_ "Unexpected %s while parsing signature", OP_DESC(o));
     }
 }
 
@@ -12455,7 +12455,7 @@ Perl_newSUBINIT(pTHX_ OP* o)
         case OP_PADAV:
         case OP_PADHV:
         case OP_UNDEF:
-            S_fixup_sigelem(o);
+            S_fixup_sigelem(aTHX_ o);
 
             o = newLISTOP(OP_SUBINIT, 0, o, NULL);
             break;
@@ -12470,7 +12470,7 @@ Perl_newSUBINIT(pTHX_ OP* o)
                         ? cBINOPx(sib)->op_last
                         : (sib->op_type == OP_UNDEF ? NULL : sib));
 
-                    S_fixup_sigelem(sib);
+                    S_fixup_sigelem(aTHX_ sib);
 
                     if (padop) {
                         PADOFFSET i = 1;
@@ -12491,14 +12491,14 @@ Perl_newSUBINIT(pTHX_ OP* o)
                     if (sib->op_type == OP_SASSIGN || sib->op_type == OP_AASSIGN)
                         last_had_default = TRUE;
                     else if (last_had_default)
-                        croak("Parameters without defaults must come first");
+                        Perl_croak(aTHX_ "Parameters without defaults must come first");
 
                     sib = sib->op_sibling;
                 }
             }
             break;
         default:
-            croak("Unexpected %s while parsing signature", OP_DESC(o));
+            Perl_croak(aTHX_ "Unexpected %s while parsing signature", OP_DESC(o));
         }
     }
     return CHECKOP(OP_SUBINIT, o);
