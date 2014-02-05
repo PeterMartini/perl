@@ -7405,11 +7405,13 @@ Perl_newMYSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP * signature, OP *attrs, OP
 	spot = (CV **)(svspot = &mg->mg_obj);
     }
 
-    if (!block || !ps || *ps || attrs
-	|| (CvFLAGS(compcv) & CVf_BUILTIN_ATTRS)
+    if (!block || attrs
+	|| (CvFLAGS(PL_compcv) & CVf_BUILTIN_ATTRS)
 #ifdef PERL_MAD
 	|| block->op_type == OP_NULL
 #endif
+	/* A const requires an empty string for proto or a signature with no params */
+	|| ((!ps && !signature) || (ps && *ps) || (signature && signature->op_flags && OPf_KIDS))
 	)
 	const_sv = NULL;
     else
@@ -7780,11 +7782,13 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *signature, OP *attrs,
 
     cv = (!name || GvCVGEN(gv)) ? NULL : GvCV(gv);
 
-    if (!block || !ps || *ps || attrs
+    if (!block || attrs
 	|| (CvFLAGS(PL_compcv) & CVf_BUILTIN_ATTRS)
 #ifdef PERL_MAD
 	|| block->op_type == OP_NULL
 #endif
+	/* A const requires an empty string for proto or a signature with no params */
+	|| ((!ps && !signature) || (ps && *ps) || (signature && signature->op_flags && OPf_KIDS))
 	)
 	const_sv = NULL;
     else
