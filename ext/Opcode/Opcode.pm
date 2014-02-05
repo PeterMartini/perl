@@ -429,6 +429,8 @@ These are a hotchpotch of opcodes still waiting to be considered
     break continue
     smartmatch
 
+    subinit
+
     custom -- where should this go
 
 =item :base_math
