@@ -7303,6 +7303,7 @@ S_already_defined(pTHX_ CV *const cv, OP * const block, OP * const o,
 CV *
 Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 {
+    PERL_ARGS_ASSERT_NEWMYSUB;
     return Perl_newMYSUB_x(aTHX_ floor, o, proto, NULL, attrs, block);
 }
 
@@ -7325,7 +7326,7 @@ Perl_newMYSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP * signature, OP *attrs, OP
     HEK *hek = NULL;
     bool reusable = FALSE;
 
-    PERL_ARGS_ASSERT_NEWMYSUB;
+    PERL_ARGS_ASSERT_NEWMYSUB_X;
 
     /* Find the pad slot for storing the new sub.
        We cannot use PL_comppad, as it is the pad owned by the new sub.  We
