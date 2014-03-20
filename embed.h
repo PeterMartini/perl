@@ -867,6 +867,7 @@
 #define mg_find_mglob(a)	Perl_mg_find_mglob(aTHX_ a)
 #define op_clear(a)		Perl_op_clear(aTHX_ a)
 #define qerror(a)		Perl_qerror(aTHX_ a)
+#define qerror_typed(a,b)	Perl_qerror_typed(aTHX_ a,b)
 #define reg_named_buff(a,b,c,d)	Perl_reg_named_buff(aTHX_ a,b,c,d)
 #define reg_named_buff_iter(a,b,c)	Perl_reg_named_buff_iter(aTHX_ a,b,c)
 #define reg_numbered_buff_fetch(a,b,c)	Perl_reg_numbered_buff_fetch(aTHX_ a,b,c)

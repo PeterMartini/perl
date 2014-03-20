@@ -1552,6 +1552,23 @@ Perl_qerror(pTHX_ SV *err)
 
     PERL_ARGS_ASSERT_QERROR;
 
+    Perl_qerror_typed(err, NULL);
+}
+
+void
+Perl_qerror_typed(pTHX_ SV *err, HV *stash)
+{
+    dVAR;
+
+    PERL_ARGS_ASSERT_QERROR;
+
+    if (stash) {
+        AV *data = newAV();
+        SV *self = newRV_noinc(data);
+        av_push(data, SvREFCNT_inc(err));
+        err = sv_bless(self, stash);
+    }
+
     if (PL_in_eval) {
 	if (PL_in_eval & EVAL_KEEPERR) {
 		Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %"SVf,

@@ -843,6 +843,7 @@ Apd	|SV*	|vmess		|NN const char* pat|NULLOK va_list* args
 : FIXME - either make it public, or stop exporting it. (Data::Alias uses this)
 : Used in gv.c, op.c, toke.c
 EXp	|void	|qerror		|NN SV* err
+EXp	|void	|qerror_typed	|NN SV* err|NULLOK HV* stash
 Apd	|void	|sortsv		|NULLOK SV** array|size_t num_elts|NN SVCOMPARE_t cmp
 Apd	|void	|sortsv_flags	|NULLOK SV** array|size_t num_elts|NN SVCOMPARE_t cmp|U32 flags
 Apd	|int	|mg_clear	|NN SV* sv
