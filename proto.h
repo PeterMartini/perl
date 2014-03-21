@@ -3314,7 +3314,7 @@ PERL_CALLCONV void	Perl_qerror(pTHX_ SV* err)
 #define PERL_ARGS_ASSERT_QERROR	\
 	assert(err)
 
-PERL_CALLCONV void	Perl_qerror_typed(pTHX_ SV* err, HV* stash)
+PERL_CALLCONV void	Perl_qerror_typed(pTHX_ SV* err, SV* package)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_QERROR_TYPED	\
 	assert(err)

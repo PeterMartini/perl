@@ -1628,7 +1628,7 @@ S_find_default_stash(pTHX_ HV **stash, const char *name, STRLEN len,
             GV *gv;
             if (is_utf8)
                 SvUTF8_on(err);
-            qerror(err);
+            qerror_typed(err, newSVpvs("error::syntax::"));
             /* To maintain the output of errors after the strict exception
              * above, and to keep compat with older releases, rather than
              * placing the variables in the pad, we place

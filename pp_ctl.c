@@ -1556,16 +1556,19 @@ Perl_qerror(pTHX_ SV *err)
 }
 
 void
-Perl_qerror_typed(pTHX_ SV *err, HV *stash)
+Perl_qerror_typed(pTHX_ SV *err, SV *package)
 {
     dVAR;
+    AV *data = NULL;
 
     PERL_ARGS_ASSERT_QERROR;
 
-    if (stash) {
-        AV *data = newAV();
+    if (package) {
+        data = newAV();
+        GV *gv = gv_fetchsv(package, GV_ADD, SVt_PVHV);
+        HV *stash = MUTABLE_HV(SvREFCNT_inc(GvHV(gv)));
         SV *self = newRV_noinc(data);
-        av_push(data, SvREFCNT_inc(err));
+        av_store(data, 0, SvREFCNT_inc(err));
         err = sv_bless(self, stash);
     }
 
@@ -1574,7 +1577,11 @@ Perl_qerror_typed(pTHX_ SV *err, HV *stash)
 		Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %"SVf,
                                                     SVfARG(err));
 	}
-	else
+	else if (data) {
+            av_store(data, 1, newSVsv(ERRSV));
+	    sv_setsv(ERRSV, err);
+        }
+        else
 	    sv_catsv(ERRSV, err);
     }
     else if (PL_errors)

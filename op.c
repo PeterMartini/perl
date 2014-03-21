@@ -565,15 +565,13 @@ S_bad_type_gv(pTHX_ I32 n, const char *t, GV *gv, U32 flags, const OP *kid)
 STATIC void
 S_no_bareword_allowed(pTHX_ OP *o)
 {
-    GV *gv = gv_fetchpvs("error::", GV_ADD, SVt_PVHV);
-    HV *stash = MUTABLE_HV(SvREFCNT_inc(GvHV(gv)));
     PERL_ARGS_ASSERT_NO_BAREWORD_ALLOWED;
 
     if (PL_madskills)
 	return;		/* various ok barewords are hidden in extra OP_NULL */
     qerror_typed(Perl_mess(aTHX_
 		     "Bareword \"%"SVf"\" not allowed while \"strict subs\" in use",
-		     SVfARG(cSVOPo_sv)), stash);
+		     SVfARG(cSVOPo_sv)), newSVpvs("error::syntax::"));
     o->op_private &= ~OPpCONST_STRICT; /* prevent warning twice about the same OP */
 }
 
